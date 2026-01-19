@@ -1,0 +1,30 @@
+{
+  "title": "Kalimba Online",
+  "description": "It is a creative platform where you can effortlessly and enjoyably play the kalimba directly in your browser.",
+
+  "option.title": "Options",
+  "option.volume": "Volume:",
+  "option.baseNote": "Base Note:",
+  "option.keys": "Keys:",
+  "option.tune": "Tune keys:",
+  "option.arrangement": "Arrangement:",
+  "option.ascending": "Ascending",
+  "option.alternating": "Alternating",
+  "option.descending": "Descending",
+  "option.labeltype": "Label Type:",
+  "option.soundfonts": "Soundfonts",
+  "option.source": "source",
+  "option.localization": "Localization:",
+  "option.color": "Color:",
+  "option.keyboardсontrol": "Keyboard Control:",
+  "option.spaceincrease": "The \"Space\" key increases the octave by 1",
+
+  "footer.builtwith": "Built with",
+  "footer.sourcecode": "Source code",
+  "footer.hostedby": "Hosted by",
+
+  "theme.darkmode.on": "Turn on dark mode",
+  "theme.darkmode.off": "Turn off dark mode",
+
+  "seo.description": "Kalimba Online — play the kalimba right in your browser!"
+}
