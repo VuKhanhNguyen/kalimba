@@ -1,0 +1,18 @@
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+// import "./index.css";
+
+import "https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js";
+import "https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js";
+import "./assets/css/pico.min.css";
+import "./assets/css/pico-theme-switcher.css";
+import "./assets/css/pico-color-picker.css";
+import "./assets/css/kalimba.css";
+
+import App from "./App.jsx";
+
+createRoot(document.body).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);

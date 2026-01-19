@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Artem Samsonov">
+    <meta name="description" content="Kalimba Online — play the kalimba right in your browser!">
+    <link rel="canonical" href="https://kalimba-online.ru" />
+
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Загрузка JQuery с CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <!-- Загрузка SoundFontPlayer.js с CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
+    <!-- Загрузка Pico.css с CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.13/css/pico.min.css">
+    
+
+    <!-- Загрузка стилей для кнопки переключения темы -->
+    <link rel="stylesheet" href="/css/pico-theme-switcher.css">
+    <link rel="stylesheet" href="/css/pico-color-picker.css">
+
+    <!-- Код, отвечающий за полный экран -->
+    <script src="/js/fullscreen.js"></script>
+
+    <!-- Загрузка стилей для калимбы -->
+    <link rel="stylesheet" href="/css/kalimba.css">
+
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" /> -->
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    <style> </style>
+
+    <title data-i18n="title">Kalimba Online</title>
+</head>
+
+<body>
+    <main class="container" data-theme="generated">
+
+        <header class="container">
+            <hgroup>
+                <h1 data-i18n="title">Kalimba Online</h1>
+                <p data-i18n="description">It is a creative platform where you can effortlessly and
+                    enjoyably play the kalimba directly in your browser.</p>
+            </hgroup>
+        </header>
+
+
+        <section>
+            <article id="main-container" data-theme="generated">
+                <!-- Блок с клавишами -->
+                <div class="kalimba-container" aria-busy="true">
+                    <!-- Заполняется в /js/kalimba.js -->
+                </div>
+                <!-- Блок с кнопками -->
+                <div class="buttons-container">
+                    <!-- Кнопка "Fullscreen" -->
+                    <button id="fullscreenButton" class="button" aria-label="Fullscreen button" title="Fullscreen button">
+                        <svg id="fullscreen-on" viewBox="0 0 24 24">
+                            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+                        </svg>
+                        <svg id="fullscreen-off" viewBox="0 0 24 24" style="display: none;">
+                            <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z" />
+                        </svg>
+                    </button>
+
+                    <button id="recordButton" class="button anim-spin" aria-label="Record button" title="Record button">
+                        <!-- Loader Icon -->
+                        <svg id="icon-spin" viewBox="0 0 36 36" class="icon loader" style="display: none;">
+                            <circle cx="18" cy="18" r="16" stroke="var(--primary-inverse)" fill="none" stroke-width="4"
+                                stroke-dasharray="100" stroke-dashoffset="33"></circle>
+                        </svg>
+                        <!-- Record Icon -->
+                        <svg id="icon-record" viewBox="0 0 36 36" class="icon">
+                            <circle cx="18" cy="18" r="11" fill="var(--primary-inverse)" ></circle>
+                        </svg>
+                        <!-- Stop Icon -->
+                        <svg id="icon-stop" viewBox="0 0 36 36" class="icon" style="display: none;">
+                            <rect width="18" height="18" x="9" y="9" fill="var(--primary-inverse)"></rect>
+                        </svg>
+                    </button>
+
+                    <button id="playButton" class="button anim-load" aria-label="Play button" title="Play button" disabled>
+                        <!-- Loader Icon -->
+                        <svg id="icon-load" viewBox="0 0 36 36" class="icon loader" style="display: none;">
+                            <circle cx="18" cy="18" r="16" stroke="var(--primary-inverse)" fill="none" stroke-width="4"
+                                stroke-dasharray="100" stroke-dashoffset="33"></circle>
+                        </svg>
+                        <!-- Play Icon -->
+                        <svg id="icon-play" viewBox="0 0 36 36" class="icon" >
+                            <polygon points="12,8 12,28 28,18" fill="var(--primary-inverse)"></polygon>
+                        </svg>
+                        <!-- Pause Icon -->
+                        <svg id="icon-pause" viewBox="0 0 36 36" class="icon" style="display: none;">
+                            <rect x="10" y="9" width="6" height="18" fill="var(--primary-inverse)"></rect>
+                            <rect x="20" y="9" width="6" height="18" fill="var(--primary-inverse)"></rect>
+                        </svg>
+                    </button>
+
+
+
+                    <script>
+                        $(document).ready(function () {
+                            $('#loading-btn').on('click', function () {
+                                var btn = $(this);
+                                btn.addClass('loading').attr('disabled', true);
+
+                                setTimeout(function () {
+                                    btn.removeClass('loading').attr('disabled', false);
+                                }, 3000); // Просто для демонстрации. Можете изменить на ваше время загрузки.
+                            });
+                        });
+                    </script>
+                </div>
+            </article>
+        </section>
+
+        <section id="options">
+            <article>
+                <h2 data-i18n="option.title">Options</h2>
+                <fieldset class="option-volume">
+                    <label for="range-volume"><span data-i18n="option.volume"> Volume: </span><span id="range-volume-value">75</span><span>%</span>
+                        <input type="range" min="0" max="100" value="75" id="range-volume" name="range-volume">
+                    </label>
+                </fieldset>
+
+                <fieldset class="option-baseNote">
+                    <label for="range-baseNote">
+                        <span data-i18n="option.baseNote"> Base Note: </span><span id="range-baseNote-value"><span>C<sub>4</sub></span></span>
+                    </label>
+                    <input type="range" min="35" max="46" value="39" id="range-baseNote" name="range-baseNote">
+                </fieldset>
+
+                <fieldset class="option-keys">
+                    <label for="range-keys"><span data-i18n="option.keys"> Keys: </span><span id="range-keys-value">17</span>
+                        <input type="range" min="8" max="21" value="17" id="range-keys" name="range-keys">
+                    </label>
+                </fieldset>
+                
+                <fieldset class="option-tune">
+                    <label>
+                        <span data-i18n="option.tune"> Tune keys: </span>
+                    </label>
+                    <div class="tune-field">
+                        <!-- Заполняется в /js/kalimba.js в updateTunes() -->
+                    </div>
+                </fieldset>
+
+                <fieldset id="arrangement-radio-list" class="option-arrangement">
+                    <legend data-i18n="option.arrangement"> Arrangement: </legend>
+                    <label for="Ascending" style="width: fit-content;padding-right: 1.4em;">
+                        <input type="radio" id="Ascending" name="arrangement" value="Ascending">
+                        <span data-i18n="option.ascending">Ascending</span>
+                    </label>
+                    <label for="Alternating" style="width: fit-content;padding-right: 1.4em;">
+                        <input type="radio" id="Alternating" name="arrangement" value="Alternating" checked>
+                        <span data-i18n="option.alternating">Alternating</span>
+                    </label>
+                    <label for="Descending" style="width: fit-content;padding-right: 1.4em;">
+                        <input type="radio" id="Descending" name="arrangement" value="Descending">
+                        <span data-i18n="option.descending">Descending</span>
+                    </label>
+                </fieldset>
+                
+                <fieldset id="labeltype-radio-list" class="option-labeltype" style="display: flex;">
+                    <legend data-i18n="option.labeltype"> Label Еype: </legend>
+                    <label for="Number" style="padding-right: 1.4em;">
+                        <input type="radio" id="Number" name="labeltype" value="Number" checked>
+                        <span>1</span>
+                    </label>
+                    <label for="Letter" style="padding-right: 1.4em;">
+                        <input type="radio" id="Letter" name="labeltype" value="Letter">
+                        <span>C</span>
+                    </label>
+                    <label for="Letter_number" style="padding-right: 1.4em;">
+                        <input type="radio" id="Letter_number" name="labeltype" value="Letter_number">
+                        <span style="font-size: 0.5em; line-height: 1em; font-weight: bold; display: inline-block;">1<br />C</span>
+                    </label>
+                </fieldset>
+
+                <fieldset class="option-soundfonts">
+                    <label for="soundfonts">
+                        <span data-i18n="option.soundfonts">Soundfonts</span>
+                        <small>
+                            (<a id="soundfonts_source" data-i18n="option.source" href="#" target="_blank">source</a>)
+                        </small>:
+                    </label>
+                    <select id="soundfonts" required>
+                        <option value="FluidR3_GM" selected>FluidR3_GM</option>
+                        <option value="FatBoy">FatBoy</option>
+                        <option value="Keylimba">Keylimba</option>
+                    </select>
+                </fieldset>
+
+                <fieldset class="option-localization">
+                    <label for="localization" data-i18n="option.localization">
+                        Localization:
+                    </label>
+                    <select id="localization" required>
+                        <!-- Заполняется в /js/lang.js -->
+                    </select>
+                </fieldset>
+
+                <fieldset id="customization" class="option-color">
+                    <legend data-i18n="option.color">Color:</legend>
+                    <!-- Заполняется в /js/pico-color-picker.js -->
+                </fieldset>
+
+                <fieldset id="keyboard_control" class="option-keyboardсontrol">
+                    <legend data-i18n="option.keyboardсontrol">Keyboard Control:</legend>
+                    <div id="keyboard_schemes" style="display: flex;">
+                        <!-- Заполняется в js/kalimba.js на основе keyboardSchemes -->
+                    </div>
+                    <small data-i18n="option.spaceincrease">The "Space" key increases the octave by 1</small>
+                </fieldset>
+
+                <fieldset class="option-kb_container">
+                    <div id="keyboard_container" class="kb_container">
+                        <!-- Заполняется в js/kalimba.js в createKeyboard() -->
+                    </div>
+                </fieldset>
+
+            </article>
+        </section>
+
+
+        <footer>
+            <hr />
+            <p>
+                <small>
+                    <span data-i18n="footer.builtwith">Built with</span> <a href="https://picocss.com" target="_blank">Pico</a> •
+                    <a href="https://github.com/Dunamis4tw/kalimba-online" target="_blank" data-i18n="footer.sourcecode">Source code</a>
+                </small>
+                <small style="float: right;">
+                    <span data-i18n="footer.hostedby">Hosted by</span> <a href="https://pages.github.com" target="_blank">GitHub Pages</a>
+                </small>
+            </p>
+        </footer>
+    </main>
+
+    <!-- <a class="github-fork-ribbon" href="https://github.com/Dunamis4tw/kalimba-online" target="_blank" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+    <style>.github-fork-ribbon:before { background-color: var(--switch-background-color); }</style> -->
+
+    <!-- Скрипт смены темы -->
+    <button class="contrast switcher theme-switcher"><i data-i18n="theme.darkmode.on" theme="dark">Turn on dark mode</i><!-- нужно, чтобы span не ставил пробел
+         --><i data-i18n="theme.darkmode.off" theme="light">Turn off dark mode</i></button>
+    <script src="/js/pico-theme-switcher.js"></script>
+    
+    <!-- Скрипт смены цвета темы -->
+    <script src="/js/pico-color-picker.js"></script>
+    <!-- Скрипт создания Калимбы -->
+    <script src="/js/kalimba.js"></script>
+
+    <!-- Скрипт локализации -->
+    <script src="/js/lang.js"></script>
+
+    <script>
+        // Проверка поддержки service-worker и его регистрация
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('[Service-worker] Service Worker зарегистрирован с областью:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('[Service-worker] Регистрация Service Worker не удалась:', error);
+                    });
+            });
+        }
+    </script>
+
+    <!-- Скрипт, добавляющий кнопку консоли на сайте для отладки на телефонах -->
+    <!-- <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script> -->
+
+</body>
+
+</html>
