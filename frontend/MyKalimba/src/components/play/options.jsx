@@ -1,13 +1,16 @@
 import React from "react";
+import { useI18n } from "../../i18n/useI18n.js";
 
 export function Options() {
+  const { lang, setLang, t, languages } = useI18n();
+
   return (
     <section id="options">
       <article>
-        <h2 data-i18n="option.title">Options</h2>
+        <h2>{t("option.title")}</h2>
         <fieldset className="option-volume">
           <label htmlFor="range-volume">
-            <span data-i18n="option.volume"> Volume: </span>
+            <span>{t("option.volume")}</span>
             <span id="range-volume-value">75</span>
             <span>%</span>
             <input
@@ -23,7 +26,7 @@ export function Options() {
 
         <fieldset className="option-baseNote">
           <label htmlFor="range-baseNote">
-            <span data-i18n="option.baseNote"> Base Note: </span>
+            <span>{t("option.baseNote")}</span>
             <span id="range-baseNote-value">
               <span>
                 C<sub>4</sub>
@@ -42,7 +45,7 @@ export function Options() {
 
         <fieldset className="option-keys">
           <label htmlFor="range-keys">
-            <span data-i18n="option.keys"> Keys: </span>
+            <span>{t("option.keys")}</span>
             <span id="range-keys-value">17</span>
             <input
               type="range"
@@ -57,13 +60,13 @@ export function Options() {
 
         <fieldset className="option-tune">
           <label>
-            <span data-i18n="option.tune"> Tune keys: </span>
+            <span>{t("option.tune")}</span>
           </label>
           <div className="tune-field"></div>
         </fieldset>
 
         <fieldset id="arrangement-radio-list" className="option-arrangement">
-          <legend data-i18n="option.arrangement"> Arrangement: </legend>
+          <legend>{t("option.arrangement")}</legend>
           <label
             htmlFor="Ascending"
             style={{ width: "fit-content", paddingRight: "1.4em" }}
@@ -74,7 +77,7 @@ export function Options() {
               name="arrangement"
               value="Ascending"
             />
-            <span data-i18n="option.ascending">Ascending</span>
+            <span>{t("option.ascending")}</span>
           </label>
           <label
             htmlFor="Alternating"
@@ -87,7 +90,7 @@ export function Options() {
               value="Alternating"
               defaultChecked
             />
-            <span data-i18n="option.alternating">Alternating</span>
+            <span>{t("option.alternating")}</span>
           </label>
           <label
             htmlFor="Descending"
@@ -99,7 +102,7 @@ export function Options() {
               name="arrangement"
               value="Descending"
             />
-            <span data-i18n="option.descending">Descending</span>
+            <span>{t("option.descending")}</span>
           </label>
         </fieldset>
 
@@ -108,7 +111,7 @@ export function Options() {
           className="option-labeltype"
           style={{ display: "flex" }}
         >
-          <legend data-i18n="option.labeltype"> Label Еype: </legend>
+          <legend>{t("option.labeltype")}</legend>
           <label htmlFor="Number" style={{ paddingRight: "1.4em" }}>
             <input
               type="radio"
@@ -145,17 +148,16 @@ export function Options() {
 
         <fieldset className="option-soundfonts">
           <label htmlFor="soundfonts">
-            <span data-i18n="option.soundfonts">Soundfonts</span>
+            <span>{t("option.soundfonts")}</span>
             <small>
               (
               <a
                 id="soundfonts_source"
-                data-i18n="option.source"
                 href="#"
                 target="_blank"
                 rel="noreferrer"
               >
-                source
+                {t("option.source")}
               </a>
               )
             </small>
@@ -169,22 +171,29 @@ export function Options() {
         </fieldset>
 
         <fieldset className="option-localization">
-          <label htmlFor="localization" data-i18n="option.localization">
-            Localization:
-          </label>
-          <select id="localization" required></select>
+          <label htmlFor="localization">{t("option.localization")}</label>
+          <select
+            id="localization"
+            required
+            value={lang}
+            onChange={(e) => setLang(e.target.value)}
+          >
+            {languages.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
+            ))}
+          </select>
         </fieldset>
 
         <fieldset id="customization" className="option-color">
-          <legend data-i18n="option.color">Color:</legend>
+          <legend>{t("option.color")}</legend>
         </fieldset>
 
         <fieldset id="keyboard_control" className="option-keyboardсontrol">
-          <legend data-i18n="option.keyboardсontrol">Keyboard Control:</legend>
+          <legend>{t("option.keyboardсontrol")}</legend>
           <div id="keyboard_schemes" style={{ display: "flex" }}></div>
-          <small data-i18n="option.spaceincrease">
-            The "Space" key increases the octave by 1
-          </small>
+          <small>{t("option.spaceincrease")}</small>
         </fieldset>
 
         <fieldset className="option-kb_container">

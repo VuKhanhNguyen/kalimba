@@ -10,9 +10,12 @@ import "./assets/css/pico-color-picker.css";
 import "./assets/css/kalimba.css";
 
 import App from "./App.jsx";
+import I18nProvider from "./i18n/I18nProvider.jsx";
 
 createRoot(document.body).render(
   <StrictMode>
-    <App />
+    <I18nProvider>
+      <App />
+    </I18nProvider>
   </StrictMode>,
 );

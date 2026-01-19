@@ -1,4 +1,6 @@
-// NOTE: Keep this list in sync with files in /public/lang/*.json.
+// DEPRECATED: This file is no longer used.
+// Localization is now handled by the React/Vite bundle (see src/i18n/I18nProvider.jsx).
+// Keep this file only for reference.
 var langs = [
   { code: "en", text: "English (English)" },
   { code: "vi", text: "Vietnamese (Tiếng Việt)" },
