@@ -1,0 +1,227 @@
+/* Global Layout Styles */
+
+/* Pico adds large vertical padding on top-level layout elements (body > main/header/footer).
+   Since this app mounts directly into <body>, that spacing can look like ~80px top/bottom.
+   Override it here and control spacing via component styles instead. */
+body > main.container {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+body > header.main-header,
+body > footer.main-footer {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Header Navigation */
+.main-header {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--muted-border-color, #e5e5e5);
+  padding: 0.5rem 0;
+  background: var(--card-background-color, transparent);
+}
+
+.main-navigation ul li strong {
+  font-size: 1.5rem; /* Larger logo text */
+  color: var(--primary);
+  letter-spacing: -0.5px;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.main-navigation ul li strong:hover {
+  transform: scale(1.05);
+}
+
+.main-navigation a {
+  font-weight: 500;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+/* Hover effect for header links */
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 2px;
+  display: block;
+  margin-top: 5px;
+  right: 0;
+  background: var(--primary);
+  transition: width 0.3s ease;
+  -webkit-transition: width 0.3s ease;
+}
+
+.nav-links a:hover::after {
+  width: 100%;
+  left: 0;
+  background: var(--primary);
+}
+
+.nav-links a:hover {
+  color: var(--primary);
+  text-decoration: none;
+  transform: translateY(-2px);
+}
+
+.nav-links {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Footer Styles */
+.main-footer {
+  margin-top: 2rem;
+  padding: 1.5rem 0 1rem;
+  border-top: 1px solid var(--muted-border-color, #e5e5e5);
+  background-color: var(--card-background-color, transparent);
+  font-size: 0.95rem;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.footer-section h5 {
+  color: var(--contrast);
+  margin-bottom: 1rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.footer-section p,
+.footer-section li {
+  color: var(--muted-color);
+  margin-bottom: 0.5rem;
+}
+
+.footer-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-section a {
+  color: var(--muted-color);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  display: inline-block; /* Required for transform */
+}
+
+.footer-section a:hover {
+  color: var(--primary);
+  transform: translateX(5px); /* Move slightly right on hover */
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 2rem;
+  border-top: 1px solid var(--muted-border-color, #eaeaea);
+  color: var(--muted-color);
+  font-size: 0.85rem;
+}
+
+.footer-bottom a {
+  color: var(--primary);
+  transition: opacity 0.2s ease;
+}
+
+.footer-bottom a:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+}
+
+/* Global Interactive Elements Animation */
+button,
+[role="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="button"] {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+button:hover,
+[role="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover,
+input[type="button"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+button:active,
+[role="button"]:active {
+  transform: translateY(0);
+}
+
+/* Page loader overlay (shown during route changes) */
+.page-loader-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+}
+
+/* HTML: <div class="page-loader-spinner"></div> */
+.page-loader-overlay .page-loader-spinner {
+  width: 50px;
+  aspect-ratio: 1;
+  display: grid;
+  border-radius: 50%;
+  background: conic-gradient(
+    #25b09b 25%,
+    #f03355 0 50%,
+    #514b82 0 75%,
+    #ffa516 0
+  );
+  animation: l22 2s infinite linear;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.page-loader-overlay .page-loader-spinner::before,
+.page-loader-overlay .page-loader-spinner::after {
+  content: "";
+  grid-area: 1/1;
+  margin: 15%;
+  border-radius: 50%;
+  background: inherit;
+  animation: inherit;
+}
+
+.page-loader-overlay .page-loader-spinner::after {
+  margin: 25%;
+  animation-duration: 3s;
+}
+
+@keyframes l22 {
+  100% {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-loader-overlay .page-loader-spinner {
+    animation: none;
+  }
+}

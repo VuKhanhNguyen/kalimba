@@ -1,5 +1,5 @@
 {
-  "title": "Kalimba Online",
+  "title": "My Kalimba",
   "description": "It is a creative platform where you can effortlessly and enjoyably play the kalimba directly in your browser.",
 
   "option.title": "Options",
@@ -26,5 +26,20 @@
   "theme.darkmode.on": "Turn on dark mode",
   "theme.darkmode.off": "Turn off dark mode",
 
-  "seo.description": "Kalimba Online — play the kalimba right in your browser!"
+  "seo.description": "My Kalimba — play the kalimba right in your browser!",
+  "header.nav.home": "Home",
+  "header.nav.songs": "Songs",
+  "header.nav.community": "Community",
+  "header.nav.login": "Login",
+
+  "footer.section.quickLinks": "Quick Links",
+  "footer.section.community": "Community",
+  "footer.section.resources": "Resources",
+  "footer.link.home": "Home",
+  "footer.link.sheets": "Sheets",
+  "footer.link.tutorials": "Tutorials",
+  "footer.link.forum": "Forum",
+  "footer.link.discord": "Discord",
+  "footer.link.contribute": "Contribute",
+  "footer.link.picoCss": "Pico CSS"
 }

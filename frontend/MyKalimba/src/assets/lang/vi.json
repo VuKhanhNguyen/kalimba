@@ -1,5 +1,5 @@
 {
-  "title": "Kalimba Online",
+  "title": "My Kalimba",
   "description": "Đây là nền tảng sáng tạo nơi bạn có thể chơi kalimba trực tiếp trong trình duyệt một cách dễ dàng và thú vị.",
 
   "option.title": "Tùy chọn",
@@ -26,5 +26,20 @@
   "theme.darkmode.on": "Bật chế độ tối",
   "theme.darkmode.off": "Tắt chế độ tối",
 
-  "seo.description": "Kalimba Online — chơi kalimba ngay trong trình duyệt!"
+  "seo.description": "My Kalimba — chơi kalimba ngay trong trình duyệt!",
+  "header.nav.home": "Trang chủ",
+  "header.nav.songs": "Bài hát",
+  "header.nav.community": "Cộng đồng",
+  "header.nav.login": "Đăng nhập",
+
+  "footer.section.quickLinks": "Liên kết nhanh",
+  "footer.section.community": "Cộng đồng",
+  "footer.section.resources": "Tài nguyên",
+  "footer.link.home": "Trang chủ",
+  "footer.link.sheets": "Bản nhạc",
+  "footer.link.tutorials": "Hướng dẫn",
+  "footer.link.forum": "Diễn đàn",
+  "footer.link.discord": "Discord",
+  "footer.link.contribute": "Đóng góp",
+  "footer.link.picoCss": "Pico CSS"
 }
