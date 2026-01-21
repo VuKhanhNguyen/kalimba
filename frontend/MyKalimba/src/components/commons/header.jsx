@@ -14,13 +14,13 @@ export function Header() {
         </ul>
         <ul className="nav-links">
           <li>
-            <a href="#">{t("header.nav.home")}</a>
+            <a href="/">{t("header.nav.home")}</a>
           </li>
           <li>
             <a href="#">{t("header.nav.songs")}</a>
           </li>
           <li>
-            <a href="#">{t("header.nav.community")}</a>
+            <a href="/instructions">{t("header.nav.instructions")}</a>
           </li>
           <li>
             <a href="#" role="button" className="outline">
