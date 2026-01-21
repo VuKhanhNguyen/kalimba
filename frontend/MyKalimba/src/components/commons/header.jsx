@@ -1,7 +1,13 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useI18n } from "../../i18n/useI18n.js";
 export function Header() {
   const { t } = useI18n();
+  const navigate = useNavigate();
+  const handleLogin = (e) => {
+    e.preventDefault();
+    navigate("/login");
+  };
   return (
     <header className="main-header">
       <nav className="main-navigation">
@@ -23,7 +29,7 @@ export function Header() {
             <a href="/instructions">{t("header.nav.instructions")}</a>
           </li>
           <li>
-            <a href="#" role="button" className="outline">
+            <a href="#" onClick={handleLogin} role="button" className="outline">
               {t("header.nav.login")}
             </a>
           </li>
