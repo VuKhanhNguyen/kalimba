@@ -96,7 +96,14 @@ const Login = () => {
         }
         window.dispatchEvent(new Event("auth:changed"));
       }
-      navigate("/");
+      navigate("/", {
+        state: {
+          toast: {
+            variant: "success",
+            message: "Đăng nhập thành công",
+          },
+        },
+      });
     } catch (err) {
       setErrors({ form: "Không thể kết nối máy chủ" });
     } finally {
