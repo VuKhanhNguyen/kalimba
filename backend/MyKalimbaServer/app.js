@@ -20,6 +20,29 @@ app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "jade");
 
 app.use(logger("dev"));
+
+// Basic CORS for API (useful when frontend runs on a different origin, e.g. Vite dev server)
+app.use(function (req, res, next) {
+  if (req.path && req.path.startsWith("/api/")) {
+    var origin = process.env.CORS_ORIGIN || "*";
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization",
+    );
+
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(204);
+    }
+  }
+  return next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -27,6 +50,8 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
+
+app.use("/api/users", usersRouter);
 
 app.use("/api/auth", authRouter);
 app.use("/api/songs", songsRouter);
@@ -54,6 +79,12 @@ app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
+
+  if (req.path && req.path.startsWith("/api/")) {
+    return res.status(err.status || 500).json({
+      message: err.message || "Server error",
+    });
+  }
 
   // render the error page
   res.status(err.status || 500);

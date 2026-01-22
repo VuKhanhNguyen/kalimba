@@ -2,12 +2,106 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../assets/css/auth.css";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+
 const Login = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
+  const [form, setForm] = useState({
+    usernameOrEmail: "",
+    password: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  const setField = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => {
+      if (!prev[field] && !prev.form) return prev;
+      return { ...prev, [field]: undefined, form: undefined };
+    });
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    const nextErrors = {};
+    if (!form.usernameOrEmail.trim())
+      nextErrors.usernameOrEmail = "Vui lòng nhập username";
+    if (!form.password) nextErrors.password = "Vui lòng nhập mật khẩu";
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username_or_email: form.usernameOrEmail.trim(),
+          password: form.password,
+        }),
+      });
+
+      const payload = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          setErrors({ form: "tên đăng nhập hoặc mật khẩu sai" });
+          return;
+        }
+
+        if (res.status === 400 && Array.isArray(payload?.details)) {
+          const serverErrors = {};
+          for (const d of payload.details) {
+            const key = Array.isArray(d?.path) ? d.path[0] : undefined;
+            if (key === "username_or_email")
+              serverErrors.usernameOrEmail = "Giá trị không hợp lệ";
+            if (key === "password")
+              serverErrors.password = "Giá trị không hợp lệ";
+          }
+          setErrors(
+            Object.keys(serverErrors).length
+              ? serverErrors
+              : { form: "Đăng nhập thất bại" },
+          );
+          return;
+        }
+
+        setErrors({ form: payload?.message || "Đăng nhập thất bại" });
+        return;
+      }
+
+      if (payload?.access_token) {
+        window.localStorage?.setItem("access_token", payload.access_token);
+      }
+
+      if (payload?.user) {
+        try {
+          window.localStorage?.setItem(
+            "auth_user",
+            JSON.stringify(payload.user),
+          );
+        } catch (_) {
+          // ignore storage errors
+        }
+        window.dispatchEvent(new Event("auth:changed"));
+      }
+      navigate("/");
+    } catch (err) {
+      setErrors({ form: "Không thể kết nối máy chủ" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -20,7 +114,13 @@ const Login = () => {
           </p>
         </header>
 
-        <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
+        <form className="auth-form" onSubmit={onSubmit}>
+          {errors.form ? (
+            <small className="form-error" role="alert">
+              {errors.form}
+            </small>
+          ) : null}
+
           <div className="form-group">
             <label htmlFor="username" className="form-label">
               Username
@@ -34,8 +134,19 @@ const Login = () => {
                 placeholder="Enter your username"
                 autoComplete="username"
                 required
+                value={form.usernameOrEmail}
+                onChange={(e) => setField("usernameOrEmail", e.target.value)}
+                aria-invalid={errors.usernameOrEmail ? "true" : "false"}
+                aria-describedby={
+                  errors.usernameOrEmail ? "username-helper" : undefined
+                }
               />
             </div>
+            {errors.usernameOrEmail ? (
+              <small id="username-helper" className="form-error" role="alert">
+                {errors.usernameOrEmail}
+              </small>
+            ) : null}
           </div>
 
           <div className="form-group">
@@ -51,6 +162,12 @@ const Login = () => {
                 placeholder="Enter your password"
                 autoComplete="current-password"
                 required
+                value={form.password}
+                onChange={(e) => setField("password", e.target.value)}
+                aria-invalid={errors.password ? "true" : "false"}
+                aria-describedby={
+                  errors.password ? "password-helper" : undefined
+                }
               />
               <button
                 type="button"
@@ -91,6 +208,11 @@ const Login = () => {
                 )}
               </button>
             </div>
+            {errors.password ? (
+              <small id="password-helper" className="form-error" role="alert">
+                {errors.password}
+              </small>
+            ) : null}
           </div>
 
           <div className="remember-forgot">
@@ -103,8 +225,8 @@ const Login = () => {
             </a>
           </div>
 
-          <button type="submit" className="auth-button">
-            Sign In
+          <button type="submit" className="auth-button" disabled={isSubmitting}>
+            {isSubmitting ? "Signing In..." : "Sign In"}
           </button>
         </form>
 

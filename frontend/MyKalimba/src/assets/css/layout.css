@@ -73,6 +73,16 @@ body > footer.main-footer {
   gap: 0.5rem;
 }
 
+/* User menu dropdown (Pico role=list) - show on hover */
+.nav-links li[role="list"] > ul {
+  display: none;
+  min-width: 12rem;
+}
+
+.nav-links li[role="list"]:hover > ul {
+  display: flex;
+}
+
 /* Footer Styles */
 .main-footer {
   margin-top: 4rem;
@@ -216,6 +226,13 @@ button:active,
 .page-loader-overlay .page-loader-spinner::after {
   margin: 25%;
   animation-duration: 3s;
+}
+
+/* Reusable inline error helper (also used outside auth pages) */
+.form-error {
+  display: block;
+  margin-top: 0.35rem;
+  color: #ff6b6b;
 }
 
 @keyframes l22 {

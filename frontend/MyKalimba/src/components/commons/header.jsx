@@ -4,9 +4,55 @@ import { useI18n } from "../../i18n/useI18n.js";
 export function Header() {
   const { t } = useI18n();
   const navigate = useNavigate();
+  const [username, setUsername] = useState(null);
+
+  useEffect(() => {
+    const readAuthUser = () => {
+      try {
+        const raw = window.localStorage?.getItem("auth_user");
+        if (!raw) return setUsername(null);
+        const user = JSON.parse(raw);
+        setUsername(user?.username || null);
+      } catch (_) {
+        setUsername(null);
+      }
+    };
+
+    readAuthUser();
+    window.addEventListener("storage", readAuthUser);
+    return () => window.removeEventListener("storage", readAuthUser);
+  }, []);
+
   const handleLogin = (e) => {
     e.preventDefault();
     navigate("/login");
+  };
+
+  const handleProfile = (e) => {
+    e.preventDefault();
+    navigate("/profile");
+  };
+
+  const handleSettings = (e) => {
+    e.preventDefault();
+    navigate("/settings");
+  };
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+
+    const ok = window.confirm("Bạn có muốn đăng xuất không?");
+    if (!ok) return;
+
+    try {
+      window.localStorage?.removeItem("access_token");
+      window.localStorage?.removeItem("auth_user");
+    } catch (_) {
+      // ignore storage errors
+    }
+    window.dispatchEvent(new Event("auth:changed"));
+    setUsername(null);
+    navigate("/");
   };
   return (
     <header className="main-header">
@@ -28,11 +74,47 @@ export function Header() {
           <li>
             <a href="/instructions">{t("header.nav.instructions")}</a>
           </li>
-          <li>
-            <a href="#" onClick={handleLogin} role="button" className="outline">
-              {t("header.nav.login")}
-            </a>
-          </li>
+          {username ? (
+            <li role="list">
+              <a
+                href="#"
+                role="button"
+                className="outline"
+                aria-haspopup="menu"
+                onClick={(e) => e.preventDefault()}
+              >
+                Xin chào {username}!
+              </a>
+              <ul role="menu">
+                <li>
+                  <a href="#" role="menuitem" onClick={handleProfile}>
+                    Hồ sơ
+                  </a>
+                </li>
+                <li>
+                  <a href="#" role="menuitem" onClick={handleSettings}>
+                    Cài đặt
+                  </a>
+                </li>
+                <li>
+                  <a href="#" role="menuitem" onClick={handleLogout}>
+                    Đăng xuất
+                  </a>
+                </li>
+              </ul>
+            </li>
+          ) : (
+            <li>
+              <a
+                href="#"
+                onClick={handleLogin}
+                role="button"
+                className="outline"
+              >
+                {t("header.nav.login")}
+              </a>
+            </li>
+          )}
         </ul>
       </nav>
       {/* Kept description but maybe hide it or style it as a subtitle in a hero section if desired. 

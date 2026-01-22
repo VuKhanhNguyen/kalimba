@@ -356,6 +356,15 @@ $(document).on("mousedown", (event) => {
 // Включаем флаг isSpacePressed когда нажат Пробел
 $(document).on("keydown", function (event) {
   if (event.keyCode == 32) {
+    const target = event.target;
+    const isEditableTarget =
+      target &&
+      (target.isContentEditable ||
+        /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+
+    // Не перехватываем пробел, если пользователь печатает в поле ввода
+    if (isEditableTarget) return;
+
     isSpacePressed = true;
     event.preventDefault(); // Отменяем прокрутку при нажатии на пробел
   }
@@ -364,6 +373,14 @@ $(document).on("keydown", function (event) {
 // Выключаем флаг isSpacePressed когда отжат Пробел
 $(document).on("keyup", function (event) {
   if (event.keyCode == 32) {
+    const target = event.target;
+    const isEditableTarget =
+      target &&
+      (target.isContentEditable ||
+        /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+
+    if (isEditableTarget) return;
+
     isSpacePressed = false;
   }
 });
@@ -861,8 +878,28 @@ function showKeyboardScheme(keyMapScheme) {
 // // // // // // // // // // //
 
 function initKalimbaUi() {
+  // React SPA navigation can remove/recreate DOM nodes.
+  // If we already have a Kalimba instance, we still need to re-render keys
+  // into the newly mounted `.kalimba-container`.
   if (!kalimba_online) {
     kalimba_online = new Kalimba_Online();
+  } else {
+    try {
+      // Clear stuck spinner from React markup
+      $(".kalimba-container").removeAttr("aria-busy");
+      // If soundfont is already loaded, just re-add keys.
+      if (
+        kalimba_online.kalimba &&
+        typeof kalimba_online.addKeys === "function"
+      ) {
+        kalimba_online.addKeys();
+      } else if (typeof kalimba_online.loadSF === "function") {
+        // Otherwise, reload soundfont (will toggle aria-busy itself)
+        kalimba_online.loadSF();
+      }
+    } catch (_) {
+      // ignore UI rehydrate errors; initialization below will still bind handlers
+    }
   }
 
   // Событие нажатия на кнопку записи
@@ -1140,23 +1177,62 @@ function initKalimbaUi() {
   });
 }
 
-function initKalimbaUiWhenReady(attempt) {
-  attempt = attempt || 0;
+let kalimbaUiObserver;
 
-  // In the React/Vite version the DOM nodes are rendered after scripts load.
+function initKalimbaUiWhenReady() {
+  // In the React/Vite version the DOM nodes are rendered after scripts load,
+  // and may appear later after SPA navigation (e.g., /login -> /).
   if (document.querySelector(".kalimba-container")) {
     initKalimbaUi();
     return;
   }
 
-  // Give up after ~10 seconds to avoid infinite loops.
-  if (attempt >= 200) return;
+  // Avoid creating multiple observers.
+  if (kalimbaUiObserver) return;
 
-  setTimeout(function () {
-    initKalimbaUiWhenReady(attempt + 1);
-  }, 50);
+  if (typeof MutationObserver === "function" && document.body) {
+    kalimbaUiObserver = new MutationObserver(function () {
+      if (document.querySelector(".kalimba-container")) {
+        try {
+          initKalimbaUi();
+        } finally {
+          kalimbaUiObserver.disconnect();
+          kalimbaUiObserver = undefined;
+        }
+      }
+    });
+
+    kalimbaUiObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    // Safety: disconnect after 10 minutes to avoid a forever observer
+    // in case the kalimba UI is never rendered.
+    setTimeout(
+      function () {
+        if (kalimbaUiObserver) {
+          kalimbaUiObserver.disconnect();
+          kalimbaUiObserver = undefined;
+        }
+      },
+      10 * 60 * 1000,
+    );
+
+    return;
+  }
+
+  // Fallback: poll slowly if MutationObserver is unavailable.
+  setTimeout(initKalimbaUiWhenReady, 200);
 }
 
 $(document).ready(function () {
-  initKalimbaUiWhenReady(0);
+  initKalimbaUiWhenReady();
+});
+
+// React SPA hook: when the play page mounts, it dispatches `kalimba:mount`.
+// We re-run init so the UI is rendered into the new DOM nodes.
+window.addEventListener("kalimba:mount", function () {
+  // Defer a tick to ensure React has committed DOM.
+  setTimeout(initKalimbaUiWhenReady, 0);
 });
