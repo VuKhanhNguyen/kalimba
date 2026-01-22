@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../commons/header.jsx";
 import Footer from "../commons/footer.jsx";
 
@@ -20,6 +20,9 @@ export function ProfilePage() {
   const [serverMessage, setServerMessage] = useState("");
   const [errors, setErrors] = useState({});
 
+  const [toast, setToast] = useState(null);
+  const toastTimerRef = useRef(null);
+
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({
     full_name: "",
@@ -34,6 +37,28 @@ export function ProfilePage() {
     setErrors((prev) => ({ ...prev, [field]: undefined, form: undefined }));
     setServerMessage("");
   };
+
+  const showToast = (variant, message) => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
+
+    setToast({ variant, message });
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, 5000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const syncAuthUserToLocalStorage = (nextUser) => {
     try {
@@ -163,7 +188,8 @@ export function ProfilePage() {
       const nextUser = payload?.user;
       setUser(nextUser);
       syncAuthUserToLocalStorage(nextUser);
-      setServerMessage("Đã cập nhật hồ sơ.");
+      setServerMessage("");
+      showToast("success", "Đã cập nhật hồ sơ");
     } catch (err) {
       setServerMessage("Không thể kết nối máy chủ");
     } finally {
@@ -226,7 +252,8 @@ export function ProfilePage() {
       setAvatarFile(null);
       setAvatarPreviewUrl(nextUser?.avatar_url || "");
       syncAuthUserToLocalStorage(nextUser);
-      setServerMessage("Đã cập nhật ảnh đại diện.");
+      setServerMessage("");
+      showToast("success", "Đã cập nhật ảnh đại diện");
     } catch (err) {
       setErrors({ avatar: "Không thể kết nối máy chủ" });
     } finally {
@@ -237,6 +264,46 @@ export function ProfilePage() {
   return (
     <React.Fragment>
       <main className="container" data-theme="generated">
+        {toast ? (
+          <div
+            className={`app-toast app-toast--${toast.variant}`}
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <span className="app-toast__icon" aria-hidden="true">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M7 12.5L10.2 15.7L17 8.9"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+            <span className="app-toast__message">{toast.message}</span>
+            <button
+              type="button"
+              className="app-toast__close"
+              aria-label="Đóng thông báo"
+              onClick={() => setToast(null)}
+            >
+              ×
+            </button>
+          </div>
+        ) : null}
         <Header />
         <article>
           <header>
