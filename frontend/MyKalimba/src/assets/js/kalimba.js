@@ -1134,6 +1134,7 @@ function initKalimbaUi() {
   });
 
   // Добавляем клавиатуру на страницу
+  $("#keyboard_container").empty();
   // Перебираем ряды клавиатуры
   keyboardKeyInfo.forEach((row) => {
     const rowElement = $('<div class="kb_row"></div>');
@@ -1151,6 +1152,7 @@ function initKalimbaUi() {
   });
 
   // Отображаем схемы управления с клавиатур, хранящиеся в массиве keyboardSchemes
+  $("#keyboard_schemes").empty();
   keyboardSchemes.forEach(function (_key, index) {
     $('<label style="padding-right: 1.4em;">')
       .appendTo($("#keyboard_schemes"))

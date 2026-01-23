@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { I18nContext } from "../../i18n/I18nProvider";
 import Header from "../commons/header.jsx";
 import Footer from "../commons/footer.jsx";
 
 export function ProfilePage() {
   const API_BASE_URL =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+  const { t } = useContext(I18nContext);
 
   const accessToken = useMemo(() => {
     try {
@@ -102,9 +104,7 @@ export function ProfilePage() {
         const payload = await res.json().catch(() => ({}));
         if (!res.ok) {
           if (isMounted) {
-            setServerMessage(
-              payload?.message || "Không thể tải thông tin hồ sơ",
-            );
+            setServerMessage(payload?.message || t("profile.loadError"));
             setUser(null);
           }
           return;
@@ -142,14 +142,14 @@ export function ProfilePage() {
     if (Array.isArray(payload?.details)) {
       for (const d of payload.details) {
         const key = Array.isArray(d?.path) ? d.path[0] : undefined;
-        if (key === "email") next.email = "Email đã tồn tại";
+        if (key === "email") next.email = t("profile.emailExists");
         if (key === "phone_number")
-          next.phone_number = "Số điện thoại đã tồn tại";
-        if (key === "full_name") next.full_name = "Họ tên không hợp lệ";
+          next.phone_number = t("profile.phoneExists");
+        if (key === "full_name") next.full_name = t("profile.invalidName");
       }
     }
     if (Object.keys(next).length === 0) {
-      next.form = payload?.message || "Cập nhật thất bại";
+      next.form = payload?.message || t("profile.updateFailed");
     }
     return next;
   };
@@ -189,9 +189,9 @@ export function ProfilePage() {
       setUser(nextUser);
       syncAuthUserToLocalStorage(nextUser);
       setServerMessage("");
-      showToast("success", "Đã cập nhật hồ sơ");
+      showToast("success", t("profile.updateSuccess"));
     } catch (err) {
-      setServerMessage("Không thể kết nối máy chủ");
+      setServerMessage(t("profile.connectError"));
     } finally {
       setIsSaving(false);
     }
@@ -218,11 +218,11 @@ export function ProfilePage() {
     e.preventDefault();
     if (isUploading) return;
     if (!accessToken) {
-      setServerMessage("Bạn chưa đăng nhập.");
+      setServerMessage(t("profile.notLoggedIn"));
       return;
     }
     if (!avatarFile) {
-      setErrors((prev) => ({ ...prev, avatar: "Vui lòng chọn ảnh đại diện" }));
+      setErrors((prev) => ({ ...prev, avatar: t("profile.selectAvatar") }));
       return;
     }
 
@@ -243,7 +243,7 @@ export function ProfilePage() {
 
       const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErrors({ avatar: payload?.message || "Tải ảnh thất bại" });
+        setErrors({ avatar: payload?.message || t("profile.uploadFailed") });
         return;
       }
 
@@ -253,9 +253,9 @@ export function ProfilePage() {
       setAvatarPreviewUrl(nextUser?.avatar_url || "");
       syncAuthUserToLocalStorage(nextUser);
       setServerMessage("");
-      showToast("success", "Đã cập nhật ảnh đại diện");
+      showToast("success", t("profile.avatarUpdated"));
     } catch (err) {
-      setErrors({ avatar: "Không thể kết nối máy chủ" });
+      setErrors({ avatar: t("profile.connectError") });
     } finally {
       setIsUploading(false);
     }
@@ -307,14 +307,14 @@ export function ProfilePage() {
         <Header />
         <article>
           <header>
-            <h2>Hồ sơ</h2>
+            <h2>{t("profile.title")}</h2>
           </header>
           {!accessToken ? (
-            <p>Bạn chưa đăng nhập.</p>
+            <p>{t("profile.notLoggedIn")}</p>
           ) : isLoading ? (
-            <p>Đang tải...</p>
+            <p>{t("profile.loading")}</p>
           ) : !user ? (
-            <p>{serverMessage || "Không thể tải hồ sơ."}</p>
+            <p>{serverMessage || t("profile.loadError")}</p>
           ) : (
             <>
               {serverMessage ? (
@@ -377,7 +377,7 @@ export function ProfilePage() {
                         margin: 0,
                       }}
                     >
-                      Chọn ảnh
+                      {t("profile.choosePhoto")}
                     </label>
                     <small
                       style={{
@@ -386,7 +386,7 @@ export function ProfilePage() {
                         color: "var(--muted-color)",
                       }}
                     >
-                      {avatarFile?.name || "Chưa chọn ảnh"}
+                      {avatarFile?.name || t("profile.noPhotoSelected")}
                     </small>
                     {errors.avatar ? (
                       <small className="form-error" role="alert">
@@ -399,7 +399,9 @@ export function ProfilePage() {
                       disabled={isUploading}
                       style={{ marginTop: ".5rem" }}
                     >
-                      {isUploading ? "Đang tải..." : "Tải ảnh lên"}
+                      {isUploading
+                        ? t("profile.uploading")
+                        : t("profile.uploadPhoto")}
                     </button>
                   </form>
                 </div>
@@ -412,12 +414,12 @@ export function ProfilePage() {
                   ) : null}
 
                   <label>
-                    Username
+                    {t("profile.username")}
                     <input type="text" value={user.username || ""} disabled />
                   </label>
 
                   <label>
-                    Họ tên
+                    {t("profile.fullName")}
                     <input
                       type="text"
                       value={form.full_name}
@@ -432,7 +434,7 @@ export function ProfilePage() {
                   </label>
 
                   <label>
-                    Email
+                    {t("profile.email")}
                     <input
                       type="email"
                       value={form.email}
@@ -447,7 +449,7 @@ export function ProfilePage() {
                   </label>
 
                   <label>
-                    Số điện thoại
+                    {t("profile.phoneNumber")}
                     <input
                       type="tel"
                       value={form.phone_number}
@@ -463,7 +465,7 @@ export function ProfilePage() {
                   </label>
 
                   <button type="submit" disabled={isSaving}>
-                    {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+                    {isSaving ? t("profile.saving") : t("profile.saveChanges")}
                   </button>
                 </form>
               </div>

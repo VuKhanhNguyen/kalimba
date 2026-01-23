@@ -31,6 +31,7 @@
   "header.nav.songs": "Songs",
   "header.nav.instructions": "Instructions",
   "header.nav.login": "Login",
+  "header.hello": "Hello",
 
   "footer.section.quickLinks": "Quick Links",
   "footer.section.community": "Community",
@@ -103,5 +104,29 @@
   "instructions.troubleshooting.keyboard.bullet3": "If Space scrolls the page: the app blocks it, but some extensions may override it; try disabling related extensions.",
 
   "instructions.footer.ready": "Ready to play? Go back to",
-  "instructions.footer.back": "the Kalimba page"
+  "instructions.footer.back": "the Kalimba page",
+
+  "profile.title": "Profile",
+  "profile.notLoggedIn": "You are not logged in.",
+  "profile.loading": "Loading...",
+  "profile.loadError": "Unable to load profile.",
+  "profile.connectError": "Unable to connect to server",
+  "profile.emailExists": "Email already exists",
+  "profile.phoneExists": "Phone number already exists",
+  "profile.invalidName": "Invalid full name",
+  "profile.updateFailed": "Update failed",
+  "profile.updateSuccess": "Profile updated",
+  "profile.choosePhoto": "Choose photo",
+  "profile.noPhotoSelected": "No photo selected",
+  "profile.uploading": "Uploading...",
+  "profile.uploadPhoto": "Upload photo",
+  "profile.selectAvatar": "Please select an avatar",
+  "profile.uploadFailed": "Upload failed",
+  "profile.avatarUpdated": "Avatar updated",
+  "profile.username": "Username",
+  "profile.fullName": "Full Name",
+  "profile.email": "Email",
+  "profile.phoneNumber": "Phone Number",
+  "profile.saving": "Saving...",
+  "profile.saveChanges": "Save Changes"
 }

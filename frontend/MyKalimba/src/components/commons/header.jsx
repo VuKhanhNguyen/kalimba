@@ -83,7 +83,7 @@ export function Header() {
                 aria-haspopup="menu"
                 onClick={(e) => e.preventDefault()}
               >
-                Xin chào {username}!
+                {t("header.hello")} {username}!
               </a>
               <ul role="menu">
                 <li>

@@ -31,6 +31,7 @@
   "header.nav.songs": "Bài hát",
   "header.nav.instructions": "Hướng dẫn",
   "header.nav.login": "Đăng nhập",
+  "header.hello": "Xin chào",
 
   "footer.section.quickLinks": "Liên kết nhanh",
   "footer.section.community": "Cộng đồng",
@@ -103,5 +104,29 @@
   "instructions.troubleshooting.keyboard.bullet3": "Nếu Space làm trang cuộn: trang đã chặn cuộn khi nhấn Space, nhưng một số extension có thể can thiệp; thử tắt extension liên quan.",
 
   "instructions.footer.ready": "Sẵn sàng chơi? Quay lại",
-  "instructions.footer.back": "trang Kalimba"
+  "instructions.footer.back": "trang Kalimba",
+
+  "profile.title": "Hồ sơ",
+  "profile.notLoggedIn": "Bạn chưa đăng nhập.",
+  "profile.loading": "Đang tải...",
+  "profile.loadError": "Không thể tải hồ sơ.",
+  "profile.connectError": "Không thể kết nối máy chủ",
+  "profile.emailExists": "Email đã tồn tại",
+  "profile.phoneExists": "Số điện thoại đã tồn tại",
+  "profile.invalidName": "Họ tên không hợp lệ",
+  "profile.updateFailed": "Cập nhật thất bại",
+  "profile.updateSuccess": "Đã cập nhật hồ sơ",
+  "profile.choosePhoto": "Chọn ảnh",
+  "profile.noPhotoSelected": "Chưa chọn ảnh",
+  "profile.uploading": "Đang tải...",
+  "profile.uploadPhoto": "Tải ảnh lên",
+  "profile.selectAvatar": "Vui lòng chọn ảnh đại diện",
+  "profile.uploadFailed": "Tải ảnh thất bại",
+  "profile.avatarUpdated": "Đã cập nhật ảnh đại diện",
+  "profile.username": "Tên đăng nhập",
+  "profile.fullName": "Họ tên",
+  "profile.email": "Email",
+  "profile.phoneNumber": "Số điện thoại",
+  "profile.saving": "Đang lưu...",
+  "profile.saveChanges": "Lưu thay đổi"
 }
