@@ -128,5 +128,32 @@
   "profile.email": "Email",
   "profile.phoneNumber": "Số điện thoại",
   "profile.saving": "Đang lưu...",
-  "profile.saveChanges": "Lưu thay đổi"
+  "profile.saveChanges": "Lưu thay đổi",
+
+  "songs.title": "Bài hát",
+  "songs.add": "Thêm bài hát",
+  "songs.edit": "Sửa",
+  "songs.delete": "Xóa",
+  "songs.form.title": "Tiêu đề",
+  "songs.form.artist": "Nghệ sĩ",
+  "songs.form.isPublic": "Công khai",
+  "songs.form.save": "Lưu",
+  "songs.form.cancel": "Hủy",
+  "songs.noSongs": "Không tìm thấy bài hát nào.",
+  "songs.deleteConfirm": "Bạn có chắc chắn muốn xóa bài hát này không?",
+
+  "tabs.title": "Tab Nhạc",
+  "tabs.add": "Thêm Tab",
+  "tabs.content": "Nội dung Tab",
+  "tabs.instrument": "Nhạc cụ",
+  "tabs.keysCount": "Số phím",
+  "tabs.noTabs": "Chưa có tab nào.",
+  "tabs.deleteConfirm": "Bạn giải chắc chắn muốn xóa tab này không?",
+  "tabs.preview": "Xem trước",
+  "tabs.play": "Phát thử",
+  "tabs.stop": "Dừng",
+  "tabs.preview.speed": "Tốc độ (BPM):",
+  "tabs.preview.noNotes": "Không phát hiện được nốt trong tab này.",
+  "tabs.form.cancel": "Hủy",
+  "tabs.form.save": "Lưu"
 }

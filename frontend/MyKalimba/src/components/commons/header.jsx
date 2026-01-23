@@ -69,7 +69,7 @@ export function Header() {
             <a href="/">{t("header.nav.home")}</a>
           </li>
           <li>
-            <a href="#">{t("header.nav.songs")}</a>
+            <a href="/songs">{t("header.nav.songs")}</a>
           </li>
           <li>
             <a href="/instructions">{t("header.nav.instructions")}</a>

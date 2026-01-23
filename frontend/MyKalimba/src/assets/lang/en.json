@@ -128,5 +128,32 @@
   "profile.email": "Email",
   "profile.phoneNumber": "Phone Number",
   "profile.saving": "Saving...",
-  "profile.saveChanges": "Save Changes"
+  "profile.saveChanges": "Save Changes",
+
+  "songs.title": "Songs",
+  "songs.add": "Add Song",
+  "songs.edit": "Edit",
+  "songs.delete": "Delete",
+  "songs.form.title": "Title",
+  "songs.form.artist": "Artist",
+  "songs.form.isPublic": "Public",
+  "songs.form.save": "Save",
+  "songs.form.cancel": "Cancel",
+  "songs.noSongs": "No songs found.",
+  "songs.deleteConfirm": "Are you sure you want to delete this song?",
+
+  "tabs.title": "Tabs",
+  "tabs.add": "Add Tab",
+  "tabs.content": "Tab Content",
+  "tabs.instrument": "Instrument",
+  "tabs.keysCount": "Keys",
+  "tabs.noTabs": "No tabs found.",
+  "tabs.deleteConfirm": "Are you sure you want to delete this tab?",
+  "tabs.preview": "Preview",
+  "tabs.play": "Play",
+  "tabs.stop": "Stop",
+  "tabs.preview.speed": "Speed (BPM):",
+  "tabs.preview.noNotes": "No notes detected in this tab.",
+  "tabs.form.cancel": "Cancel",
+  "tabs.form.save": "Save"
 }
