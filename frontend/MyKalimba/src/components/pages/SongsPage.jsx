@@ -1,9 +1,9 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
 import { I18nContext } from "../../i18n/I18nProvider";
 import Header from "../commons/header.jsx";
 import Footer from "../commons/footer.jsx";
 import { SongTabsList } from "../songs/SongTabsList.jsx";
+import Modal from "../commons/Modal.jsx";
 
 function parseJwtPayload(token) {
   if (!token || typeof token !== "string") return null;
@@ -49,7 +49,6 @@ export function SongsPage() {
   const API_BASE_URL =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
   const { t } = useContext(I18nContext);
-  const navigate = useNavigate();
 
   const [auth, setAuth] = useState(() => readAuthSnapshot());
   const accessToken = auth.accessToken;
@@ -69,7 +68,7 @@ export function SongsPage() {
   const [serverMessage, setServerMessage] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingSong, setEditingSong] = useState(null);
-  const [expandedSongId, setExpandedSongId] = useState(null);
+  const [viewingSong, setViewingSong] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -194,8 +193,12 @@ export function SongsPage() {
     return Number(song.createdBy) === currentUserId;
   };
 
-  const toggleExpand = (id) => {
-    setExpandedSongId((prev) => (prev === id ? null : id));
+  const openSongDetails = (song) => setViewingSong(song);
+  const closeSongDetails = () => setViewingSong(null);
+
+  const closeSongForm = () => {
+    setShowForm(false);
+    setEditingSong(null);
   };
 
   return (
@@ -217,61 +220,80 @@ export function SongsPage() {
           )}
         </header>
 
-        {showForm && (
-          <div
-            style={{
-              marginBottom: "2rem",
-              padding: "1rem",
-              border: "1px solid var(--muted-border-color)",
-              borderRadius: "var(--border-radius)",
-            }}
-          >
-            <h4>{editingSong ? t("songs.edit") : t("songs.add")}</h4>
-            <form onSubmit={handleFormSubmit}>
-              <label>
-                {t("songs.form.title")}
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                {t("songs.form.artist")}
-                <input
-                  type="text"
-                  value={formData.artist}
-                  onChange={(e) =>
-                    setFormData({ ...formData, artist: e.target.value })
-                  }
-                />
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={formData.is_public}
-                  onChange={(e) =>
-                    setFormData({ ...formData, is_public: e.target.checked })
-                  }
-                />
-                {t("songs.form.isPublic")}
-              </label>
-              <div className="grid">
-                <button type="submit">{t("songs.form.save")}</button>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => setShowForm(false)}
-                >
-                  {t("songs.form.cancel")}
-                </button>
+        <Modal
+          open={showForm}
+          title={editingSong ? t("songs.edit") : t("songs.add")}
+          onClose={closeSongForm}
+          maxWidth={640}
+        >
+          <form onSubmit={handleFormSubmit}>
+            <label>
+              {t("songs.form.title")}
+              <input
+                type="text"
+                required
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+              />
+            </label>
+            <label>
+              {t("songs.form.artist")}
+              <input
+                type="text"
+                value={formData.artist}
+                onChange={(e) =>
+                  setFormData({ ...formData, artist: e.target.value })
+                }
+              />
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={formData.is_public}
+                onChange={(e) =>
+                  setFormData({ ...formData, is_public: e.target.checked })
+                }
+              />
+              {t("songs.form.isPublic")}
+            </label>
+            <div className="grid">
+              <button type="submit">{t("songs.form.save")}</button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={closeSongForm}
+              >
+                {t("songs.form.cancel")}
+              </button>
+            </div>
+          </form>
+        </Modal>
+
+        <Modal
+          open={Boolean(viewingSong)}
+          title={viewingSong ? viewingSong.title : t("songs.title")}
+          onClose={closeSongDetails}
+          maxWidth={980}
+        >
+          {viewingSong ? (
+            <div>
+              <div
+                style={{ marginBottom: "0.75rem", color: "var(--muted-color)" }}
+              >
+                <small>
+                  {t("songs.form.artist")}: {viewingSong.artist || "—"}
+                </small>
               </div>
-            </form>
-          </div>
-        )}
+
+              <SongTabsList
+                songId={viewingSong.id}
+                isOwner={userCanEdit(viewingSong)}
+              />
+            </div>
+          ) : null}
+        </Modal>
 
         {isLoading ? (
           <p aria-busy="true">{t("profile.loading")}</p>
@@ -291,71 +313,48 @@ export function SongsPage() {
               </thead>
               <tbody>
                 {songs.map((song) => (
-                  <React.Fragment key={song.id}>
-                    <tr
-                      style={{
-                        cursor: "pointer",
-                        backgroundColor:
-                          expandedSongId === song.id
-                            ? "var(--muted-border-color)"
-                            : "transparent",
-                      }}
-                      onClick={() => toggleExpand(song.id)}
-                    >
-                      <td>
-                        <strong>{song.title}</strong>
-                      </td>
-                      <td>{song.artist}</td>
-                      <td style={{ textAlign: "right" }}>
-                        {userCanEdit(song) && (
-                          <div
-                            className="grid"
-                            style={{ gap: "0.5rem", justifyContent: "end" }}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              className="secondary outline"
-                              style={{
-                                padding: "0.25rem 0.5rem",
-                                fontSize: "0.8rem",
-                                width: "auto",
-                              }}
-                              onClick={() => handleEdit(song)}
-                            >
-                              {t("songs.edit")}
-                            </button>
-                            <button
-                              className="contrast outline"
-                              style={{
-                                padding: "0.25rem 0.5rem",
-                                fontSize: "0.8rem",
-                                width: "auto",
-                              }}
-                              onClick={() => handleDelete(song.id)}
-                            >
-                              {t("songs.delete")}
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                    {expandedSongId === song.id && (
-                      <tr>
-                        <td
-                          colSpan="3"
-                          style={{
-                            padding: "0 1rem 1rem 1rem",
-                            borderTop: "none",
-                          }}
+                  <tr
+                    key={song.id}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => openSongDetails(song)}
+                  >
+                    <td>
+                      <strong>{song.title}</strong>
+                    </td>
+                    <td>{song.artist}</td>
+                    <td style={{ textAlign: "right" }}>
+                      {userCanEdit(song) && (
+                        <div
+                          className="grid"
+                          style={{ gap: "0.5rem", justifyContent: "end" }}
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <SongTabsList
-                            songId={song.id}
-                            isOwner={userCanEdit(song)}
-                          />
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                          <button
+                            className="secondary outline"
+                            style={{
+                              padding: "0.25rem 0.5rem",
+                              fontSize: "0.8rem",
+                              width: "auto",
+                            }}
+                            onClick={() => handleEdit(song)}
+                          >
+                            {t("songs.edit")}
+                          </button>
+                          <button
+                            className="contrast outline"
+                            style={{
+                              padding: "0.25rem 0.5rem",
+                              fontSize: "0.8rem",
+                              width: "auto",
+                            }}
+                            onClick={() => handleDelete(song.id)}
+                          >
+                            {t("songs.delete")}
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>

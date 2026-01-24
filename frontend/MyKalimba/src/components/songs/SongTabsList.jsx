@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { I18nContext } from "../../i18n/I18nProvider";
 import { parseTabContent, tokensToNoteSequence } from "../../utils/tabNotation";
 import { playNoteSequence } from "../../utils/previewPlayer";
+import Modal from "../commons/Modal.jsx";
 
 function readAccessToken() {
   try {
@@ -31,7 +32,7 @@ export function SongTabsList({ songId, isOwner }) {
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTab, setEditingTab] = useState(null);
-  const [expandedTabId, setExpandedTabId] = useState(null);
+  const [previewTab, setPreviewTab] = useState(null);
   const [bpm, setBpm] = useState(120);
   const [playback, setPlayback] = useState({ tabId: null, stop: null });
 
@@ -95,7 +96,20 @@ export function SongTabsList({ songId, isOwner }) {
   };
 
   const togglePreview = (id) => {
-    setExpandedTabId((prev) => (prev === id ? null : id));
+    // kept for backward compatibility if referenced; now replaced by modal preview
+    const found = tabs.find((t) => t.id === id);
+    if (!found) return;
+    setPreviewTab(found);
+  };
+
+  const closePreview = () => {
+    stopPlayback();
+    setPreviewTab(null);
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingTab(null);
   };
 
   const handlePlayPreview = async (tab) => {
@@ -125,6 +139,7 @@ export function SongTabsList({ songId, isOwner }) {
 
   const handleEdit = (tab) => {
     setEditingTab(tab);
+    setPreviewTab(null);
     setFormData({
       instrument: tab.instrument,
       keys_count: tab.keysCount || 17,
@@ -139,6 +154,7 @@ export function SongTabsList({ songId, isOwner }) {
 
   const handleAddNew = () => {
     setEditingTab(null);
+    setPreviewTab(null);
     setFormData({
       instrument: "kalimba",
       keys_count: 17,
@@ -177,8 +193,7 @@ export function SongTabsList({ songId, isOwner }) {
       }
 
       await loadTabs();
-      setShowForm(false);
-      setEditingTab(null);
+      closeForm();
     } catch (error) {
       alert(error.message);
     }
@@ -218,16 +233,13 @@ export function SongTabsList({ songId, isOwner }) {
         )}
       </div>
 
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            marginBottom: "1rem",
-            padding: "1rem",
-            border: "1px solid var(--muted-border-color)",
-            borderRadius: "var(--border-radius)",
-          }}
-        >
+      <Modal
+        open={showForm}
+        title={editingTab ? t("songs.edit") : t("tabs.add")}
+        onClose={closeForm}
+        maxWidth={720}
+      >
+        <form onSubmit={handleSubmit}>
           <label>
             {t("tabs.instrument")}
             <select
@@ -250,7 +262,7 @@ export function SongTabsList({ songId, isOwner }) {
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  keys_count: parseInt(e.target.value),
+                  keys_count: parseInt(e.target.value, 10),
                 })
               }
             />
@@ -272,7 +284,7 @@ export function SongTabsList({ songId, isOwner }) {
           <label>
             {t("tabs.content")} (text/JSON)
             <textarea
-              rows="5"
+              rows="10"
               required
               value={formData.content}
               onChange={(e) =>
@@ -282,16 +294,212 @@ export function SongTabsList({ songId, isOwner }) {
           </label>
           <div className="grid">
             <button type="submit">{t("tabs.form.save")}</button>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => setShowForm(false)}
-            >
+            <button type="button" className="secondary" onClick={closeForm}>
               {t("tabs.form.cancel")}
             </button>
           </div>
         </form>
-      )}
+      </Modal>
+
+      <Modal
+        open={Boolean(previewTab)}
+        title={t("tabs.preview")}
+        onClose={closePreview}
+        maxWidth={980}
+      >
+        {previewTab ? (
+          <div>
+            <div
+              style={{ marginBottom: "0.5rem", color: "var(--muted-color)" }}
+            >
+              <small>
+                {previewTab.instrument} ({previewTab.keysCount} keys) ·{" "}
+                {t("option.labeltype")}{" "}
+                {previewTab.labelType === "Letter" ? "C" : "1"}
+              </small>
+            </div>
+
+            <label style={{ marginBottom: "0.75rem" }}>
+              <small>
+                {t("tabs.preview.speed")} {bpm}
+              </small>
+              <input
+                type="range"
+                min="60"
+                max="200"
+                value={bpm}
+                onChange={(e) => setBpm(parseInt(e.target.value, 10))}
+              />
+            </label>
+
+            {(() => {
+              const contentString =
+                typeof previewTab.content === "string"
+                  ? previewTab.content
+                  : JSON.stringify(previewTab.content, null, 2);
+              const { tokens, warnings } = parseTabContent(
+                contentString,
+                previewTab.labelType || "Number",
+              );
+
+              return (
+                <>
+                  {warnings?.length ? (
+                    <p style={{ margin: "0 0 0.5rem 0" }}>
+                      <small style={{ color: "var(--secondary)" }}>
+                        {warnings[0]}
+                      </small>
+                    </p>
+                  ) : null}
+
+                  <div
+                    style={{
+                      fontFamily:
+                        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+                      lineHeight: 1.8,
+                      padding: "0.75rem",
+                      border: "1px solid var(--muted-border-color)",
+                      borderRadius: "var(--border-radius)",
+                      overflowX: "auto",
+                      background: "var(--card-background-color)",
+                    }}
+                  >
+                    {tokens.map((tok, idx) => {
+                      if (tok.type === "newline") {
+                        return <br key={`nl-${idx}`} />;
+                      }
+
+                      if (tok.type === "bar") {
+                        return (
+                          <span
+                            key={`bar-${idx}`}
+                            style={{
+                              display: "inline-block",
+                              minWidth: "1rem",
+                              textAlign: "center",
+                              margin: "0 0.35rem 0 0.1rem",
+                              color: "var(--muted-color)",
+                              fontWeight: 700,
+                            }}
+                            title="bar"
+                          >
+                            |
+                          </span>
+                        );
+                      }
+
+                      if (tok.type === "beat") {
+                        return (
+                          <span
+                            key={`beat-${idx}`}
+                            style={{
+                              display: "inline-block",
+                              minWidth: "1rem",
+                              textAlign: "center",
+                              margin: "0 0.35rem 0 0.1rem",
+                              color: "var(--muted-color)",
+                            }}
+                            title="beat"
+                          >
+                            ,
+                          </span>
+                        );
+                      }
+
+                      if (tok.type === "hold") {
+                        return (
+                          <span
+                            key={`h-${idx}`}
+                            style={{
+                              display: "inline-block",
+                              minWidth: "1.4rem",
+                              textAlign: "center",
+                              marginRight: "0.25rem",
+                              padding: "0.1rem 0.35rem",
+                              borderRadius: "0.35rem",
+                              border: "1px dashed var(--muted-border-color)",
+                              color: "var(--muted-color)",
+                            }}
+                            title="hold"
+                          >
+                            {tok.raw}
+                          </span>
+                        );
+                      }
+
+                      if (tok.type === "rest") {
+                        return (
+                          <span
+                            key={`r-${idx}`}
+                            style={{
+                              display: "inline-block",
+                              minWidth: "1.4rem",
+                              textAlign: "center",
+                              marginRight: "0.25rem",
+                              padding: "0.1rem 0.35rem",
+                              borderRadius: "0.35rem",
+                              border: "1px dashed var(--muted-border-color)",
+                              color: "var(--muted-color)",
+                            }}
+                            title="rest"
+                          >
+                            {tok.raw}
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <span
+                          key={`n-${idx}`}
+                          style={{
+                            display: "inline-block",
+                            minWidth: "1.4rem",
+                            textAlign: "center",
+                            marginRight: "0.25rem",
+                            padding: "0.1rem 0.35rem",
+                            borderRadius: "0.35rem",
+                            border: "1px solid var(--muted-border-color)",
+                          }}
+                          title={tok.noteName}
+                        >
+                          {tok.raw}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </>
+              );
+            })()}
+
+            <div style={{ marginTop: "0.75rem" }} className="grid">
+              {playback.tabId === previewTab.id ? (
+                <button
+                  type="button"
+                  className="outline contrast"
+                  onClick={stopPlayback}
+                >
+                  {t("tabs.stop")}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="outline secondary"
+                  onClick={() => handlePlayPreview(previewTab)}
+                >
+                  {t("tabs.play")}
+                </button>
+              )}
+              <button
+                type="button"
+                className="secondary"
+                onClick={closePreview}
+              >
+                {t("tabs.form.cancel")}
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       {tabs.length === 0 ? (
         <p>
@@ -412,169 +620,7 @@ export function SongTabsList({ songId, isOwner }) {
                 </div>
               </div>
 
-              {expandedTabId === tab.id ? (
-                <div
-                  style={{
-                    marginTop: "0.75rem",
-                    padding: "0.75rem",
-                    borderTop: "1px solid var(--muted-border-color)",
-                  }}
-                >
-                  <label style={{ marginBottom: "0.5rem" }}>
-                    <small>
-                      {t("tabs.preview.speed")} {bpm}
-                    </small>
-                    <input
-                      type="range"
-                      min="60"
-                      max="200"
-                      value={bpm}
-                      onChange={(e) => setBpm(parseInt(e.target.value, 10))}
-                    />
-                  </label>
-
-                  {(() => {
-                    const contentString =
-                      typeof tab.content === "string"
-                        ? tab.content
-                        : JSON.stringify(tab.content, null, 2);
-                    const { tokens, warnings } = parseTabContent(
-                      contentString,
-                      tab.labelType || "Number",
-                    );
-
-                    return (
-                      <>
-                        {warnings?.length ? (
-                          <p style={{ margin: "0 0 0.5rem 0" }}>
-                            <small style={{ color: "var(--secondary)" }}>
-                              {warnings[0]}
-                            </small>
-                          </p>
-                        ) : null}
-
-                        <div
-                          style={{
-                            fontFamily:
-                              "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-                            lineHeight: 1.8,
-                            padding: "0.75rem",
-                            border: "1px solid var(--muted-border-color)",
-                            borderRadius: "var(--border-radius)",
-                            overflowX: "auto",
-                            background: "var(--card-background-color)",
-                          }}
-                        >
-                          {tokens.map((tok, idx) => {
-                            if (tok.type === "newline") {
-                              return <br key={`nl-${idx}`} />;
-                            }
-
-                            if (tok.type === "bar") {
-                              return (
-                                <span
-                                  key={`bar-${idx}`}
-                                  style={{
-                                    display: "inline-block",
-                                    minWidth: "1rem",
-                                    textAlign: "center",
-                                    margin: "0 0.35rem 0 0.1rem",
-                                    color: "var(--muted-color)",
-                                    fontWeight: 700,
-                                  }}
-                                  title="bar"
-                                >
-                                  |
-                                </span>
-                              );
-                            }
-
-                            if (tok.type === "beat") {
-                              return (
-                                <span
-                                  key={`beat-${idx}`}
-                                  style={{
-                                    display: "inline-block",
-                                    minWidth: "1rem",
-                                    textAlign: "center",
-                                    margin: "0 0.35rem 0 0.1rem",
-                                    color: "var(--muted-color)",
-                                  }}
-                                  title="beat"
-                                >
-                                  ,
-                                </span>
-                              );
-                            }
-
-                            if (tok.type === "hold") {
-                              return (
-                                <span
-                                  key={`h-${idx}`}
-                                  style={{
-                                    display: "inline-block",
-                                    minWidth: "1.4rem",
-                                    textAlign: "center",
-                                    marginRight: "0.25rem",
-                                    padding: "0.1rem 0.35rem",
-                                    borderRadius: "0.35rem",
-                                    border:
-                                      "1px dashed var(--muted-border-color)",
-                                    color: "var(--muted-color)",
-                                  }}
-                                  title="hold"
-                                >
-                                  {tok.raw}
-                                </span>
-                              );
-                            }
-
-                            if (tok.type === "rest") {
-                              return (
-                                <span
-                                  key={`r-${idx}`}
-                                  style={{
-                                    display: "inline-block",
-                                    minWidth: "1.4rem",
-                                    textAlign: "center",
-                                    marginRight: "0.25rem",
-                                    padding: "0.1rem 0.35rem",
-                                    borderRadius: "0.35rem",
-                                    border:
-                                      "1px dashed var(--muted-border-color)",
-                                    color: "var(--muted-color)",
-                                  }}
-                                  title="rest"
-                                >
-                                  {tok.raw}
-                                </span>
-                              );
-                            }
-
-                            return (
-                              <span
-                                key={`n-${idx}`}
-                                style={{
-                                  display: "inline-block",
-                                  minWidth: "1.4rem",
-                                  textAlign: "center",
-                                  marginRight: "0.25rem",
-                                  padding: "0.1rem 0.35rem",
-                                  borderRadius: "0.35rem",
-                                  border: "1px solid var(--muted-border-color)",
-                                }}
-                                title={tok.noteName}
-                              >
-                                {tok.raw}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              ) : null}
+              {null}
             </li>
           ))}
         </ul>
