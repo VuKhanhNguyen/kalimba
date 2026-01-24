@@ -3,6 +3,11 @@ import { I18nContext } from "../../i18n/I18nProvider";
 import { parseTabContent, tokensToNoteSequence } from "../../utils/tabNotation";
 import { playNoteSequence } from "../../utils/previewPlayer";
 import Modal from "../commons/Modal.jsx";
+import TabLyricNotationView from "./TabLyricNotationView.jsx";
+import {
+  buildLyricNotationBlocks,
+  toContentString,
+} from "../../utils/tabLyricLayout";
 
 function readAccessToken() {
   try {
@@ -116,10 +121,7 @@ export function SongTabsList({ songId, isOwner }) {
     try {
       stopPlayback();
 
-      const contentString =
-        typeof tab.content === "string"
-          ? tab.content
-          : JSON.stringify(tab.content, null, 2);
+      const contentString = toContentString(tab.content);
       const { tokens } = parseTabContent(
         contentString,
         tab.labelType || "Number",
@@ -144,10 +146,7 @@ export function SongTabsList({ songId, isOwner }) {
       instrument: tab.instrument,
       keys_count: tab.keysCount || 17,
       label_type: tab.labelType || "Number",
-      content:
-        typeof tab.content === "string"
-          ? tab.content
-          : JSON.stringify(tab.content, null, 2),
+      content: toContentString(tab.content),
     });
     setShowForm(true);
   };
@@ -333,14 +332,14 @@ export function SongTabsList({ songId, isOwner }) {
             </label>
 
             {(() => {
-              const contentString =
-                typeof previewTab.content === "string"
-                  ? previewTab.content
-                  : JSON.stringify(previewTab.content, null, 2);
+              const contentString = toContentString(previewTab.content);
               const { tokens, warnings } = parseTabContent(
                 contentString,
                 previewTab.labelType || "Number",
               );
+
+              const blocks = buildLyricNotationBlocks(contentString);
+              const showLyricLayout = blocks.some((b) => b.lyric && b.notes);
 
               return (
                 <>
@@ -352,64 +351,108 @@ export function SongTabsList({ songId, isOwner }) {
                     </p>
                   ) : null}
 
-                  <div
-                    style={{
-                      fontFamily:
-                        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-                      lineHeight: 1.8,
-                      padding: "0.75rem",
-                      border: "1px solid var(--muted-border-color)",
-                      borderRadius: "var(--border-radius)",
-                      overflowX: "auto",
-                      background: "var(--card-background-color)",
-                    }}
-                  >
-                    {tokens.map((tok, idx) => {
-                      if (tok.type === "newline") {
-                        return <br key={`nl-${idx}`} />;
-                      }
+                  {showLyricLayout ? (
+                    <TabLyricNotationView content={contentString} />
+                  ) : (
+                    <div
+                      style={{
+                        fontFamily:
+                          "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+                        lineHeight: 1.8,
+                        padding: "0.75rem",
+                        border: "1px solid var(--muted-border-color)",
+                        borderRadius: "var(--border-radius)",
+                        overflowX: "auto",
+                        background: "var(--card-background-color)",
+                      }}
+                    >
+                      {tokens.map((tok, idx) => {
+                        if (tok.type === "newline") {
+                          return <br key={`nl-${idx}`} />;
+                        }
 
-                      if (tok.type === "bar") {
+                        if (tok.type === "bar") {
+                          return (
+                            <span
+                              key={`bar-${idx}`}
+                              style={{
+                                display: "inline-block",
+                                minWidth: "1rem",
+                                textAlign: "center",
+                                margin: "0 0.35rem 0 0.1rem",
+                                color: "var(--muted-color)",
+                                fontWeight: 700,
+                              }}
+                              title="bar"
+                            >
+                              |
+                            </span>
+                          );
+                        }
+
+                        if (tok.type === "beat") {
+                          return (
+                            <span
+                              key={`beat-${idx}`}
+                              style={{
+                                display: "inline-block",
+                                minWidth: "1rem",
+                                textAlign: "center",
+                                margin: "0 0.35rem 0 0.1rem",
+                                color: "var(--muted-color)",
+                              }}
+                              title="beat"
+                            >
+                              ,
+                            </span>
+                          );
+                        }
+
+                        if (tok.type === "hold") {
+                          return (
+                            <span
+                              key={`h-${idx}`}
+                              style={{
+                                display: "inline-block",
+                                minWidth: "1.4rem",
+                                textAlign: "center",
+                                marginRight: "0.25rem",
+                                padding: "0.1rem 0.35rem",
+                                borderRadius: "0.35rem",
+                                border: "1px dashed var(--muted-border-color)",
+                                color: "var(--muted-color)",
+                              }}
+                              title="hold"
+                            >
+                              {tok.raw}
+                            </span>
+                          );
+                        }
+
+                        if (tok.type === "rest") {
+                          return (
+                            <span
+                              key={`r-${idx}`}
+                              style={{
+                                display: "inline-block",
+                                minWidth: "1.4rem",
+                                textAlign: "center",
+                                marginRight: "0.25rem",
+                                padding: "0.1rem 0.35rem",
+                                borderRadius: "0.35rem",
+                                border: "1px dashed var(--muted-border-color)",
+                                color: "var(--muted-color)",
+                              }}
+                              title="rest"
+                            >
+                              {tok.raw}
+                            </span>
+                          );
+                        }
+
                         return (
                           <span
-                            key={`bar-${idx}`}
-                            style={{
-                              display: "inline-block",
-                              minWidth: "1rem",
-                              textAlign: "center",
-                              margin: "0 0.35rem 0 0.1rem",
-                              color: "var(--muted-color)",
-                              fontWeight: 700,
-                            }}
-                            title="bar"
-                          >
-                            |
-                          </span>
-                        );
-                      }
-
-                      if (tok.type === "beat") {
-                        return (
-                          <span
-                            key={`beat-${idx}`}
-                            style={{
-                              display: "inline-block",
-                              minWidth: "1rem",
-                              textAlign: "center",
-                              margin: "0 0.35rem 0 0.1rem",
-                              color: "var(--muted-color)",
-                            }}
-                            title="beat"
-                          >
-                            ,
-                          </span>
-                        );
-                      }
-
-                      if (tok.type === "hold") {
-                        return (
-                          <span
-                            key={`h-${idx}`}
+                            key={`n-${idx}`}
                             style={{
                               display: "inline-block",
                               minWidth: "1.4rem",
@@ -417,56 +460,16 @@ export function SongTabsList({ songId, isOwner }) {
                               marginRight: "0.25rem",
                               padding: "0.1rem 0.35rem",
                               borderRadius: "0.35rem",
-                              border: "1px dashed var(--muted-border-color)",
-                              color: "var(--muted-color)",
+                              border: "1px solid var(--muted-border-color)",
                             }}
-                            title="hold"
+                            title={tok.noteName}
                           >
                             {tok.raw}
                           </span>
                         );
-                      }
-
-                      if (tok.type === "rest") {
-                        return (
-                          <span
-                            key={`r-${idx}`}
-                            style={{
-                              display: "inline-block",
-                              minWidth: "1.4rem",
-                              textAlign: "center",
-                              marginRight: "0.25rem",
-                              padding: "0.1rem 0.35rem",
-                              borderRadius: "0.35rem",
-                              border: "1px dashed var(--muted-border-color)",
-                              color: "var(--muted-color)",
-                            }}
-                            title="rest"
-                          >
-                            {tok.raw}
-                          </span>
-                        );
-                      }
-
-                      return (
-                        <span
-                          key={`n-${idx}`}
-                          style={{
-                            display: "inline-block",
-                            minWidth: "1.4rem",
-                            textAlign: "center",
-                            marginRight: "0.25rem",
-                            padding: "0.1rem 0.35rem",
-                            borderRadius: "0.35rem",
-                            border: "1px solid var(--muted-border-color)",
-                          }}
-                          title={tok.noteName}
-                        >
-                          {tok.raw}
-                        </span>
-                      );
-                    })}
-                  </div>
+                      })}
+                    </div>
+                  )}
                 </>
               );
             })()}
@@ -539,15 +542,36 @@ export function SongTabsList({ songId, isOwner }) {
                   </div>
                   <div
                     style={{
-                      maxHeight: "60px",
-                      overflow: "hidden",
+                      marginTop: "0.4rem",
                       fontSize: "0.8rem",
-                      color: "var(--muted-color)",
                     }}
                   >
-                    {typeof tab.content === "string"
-                      ? tab.content
-                      : "JSON content"}
+                    {(() => {
+                      const contentString = toContentString(tab.content);
+                      const blocks = buildLyricNotationBlocks(contentString);
+                      const showLyricLayout = blocks.some(
+                        (b) => b.lyric && b.notes,
+                      );
+                      return showLyricLayout ? (
+                        <TabLyricNotationView
+                          content={contentString}
+                          maxBlocks={2}
+                          compact
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            maxHeight: "60px",
+                            overflow: "hidden",
+                            color: "var(--muted-color)",
+                          }}
+                        >
+                          {typeof tab.content === "string"
+                            ? tab.content
+                            : "JSON content"}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div

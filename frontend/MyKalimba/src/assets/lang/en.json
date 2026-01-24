@@ -142,6 +142,13 @@
   "songs.noSongs": "No songs found.",
   "songs.deleteConfirm": "Are you sure you want to delete this song?",
 
+  "home.songs.pickHint": "Pick a song to view tabs (and lyrics if available) on the home page.",
+  "home.songs.search": "Search",
+  "home.songs.searchPlaceholder": "Search by title or artist…",
+  "home.songs.clearSelection": "Clear",
+  "home.song.lyricsTitle": "Lyrics",
+  "home.song.noLyrics": "(No lyrics available for this song yet)",
+
   "tabs.title": "Tabs",
   "tabs.add": "Add Tab",
   "tabs.content": "Tab Content",

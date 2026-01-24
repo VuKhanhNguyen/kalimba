@@ -142,6 +142,13 @@
   "songs.noSongs": "Không tìm thấy bài hát nào.",
   "songs.deleteConfirm": "Bạn có chắc chắn muốn xóa bài hát này không?",
 
+  "home.songs.pickHint": "Chọn một bài để xem tab (và lời nếu có) ngay tại trang chủ.",
+  "home.songs.search": "Tìm kiếm",
+  "home.songs.searchPlaceholder": "Tìm theo tiêu đề hoặc nghệ sĩ…",
+  "home.songs.clearSelection": "Bỏ chọn",
+  "home.song.lyricsTitle": "Lời bài hát",
+  "home.song.noLyrics": "(Chưa có lời bài hát cho bài này)",
+
   "tabs.title": "Tab Nhạc",
   "tabs.add": "Thêm Tab",
   "tabs.content": "Nội dung Tab",

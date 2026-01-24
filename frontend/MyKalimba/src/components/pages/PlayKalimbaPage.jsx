@@ -4,6 +4,7 @@ import Header from "../commons/header.jsx";
 import Footer from "../commons/footer.jsx";
 import Keyboard from "../play/keyboard.jsx";
 import Options from "../play/options.jsx";
+import HomeSongsPanel from "../songs/HomeSongsPanel.jsx";
 
 export function PlayKalimbaPage() {
   const location = useLocation();
@@ -97,6 +98,7 @@ export function PlayKalimbaPage() {
           </div>
         ) : null}
         <Header />
+        <HomeSongsPanel />
         <Keyboard />
         <Options />
         <Footer />
