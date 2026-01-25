@@ -15,6 +15,10 @@ var models = require("./models");
 
 var app = express();
 
+// Behind Render (and most PaaS), the app sits behind a reverse proxy.
+// Trust X-Forwarded-* headers so req.protocol/req.secure are correct (important for OAuth + cookies).
+app.set("trust proxy", 1);
+
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "jade");

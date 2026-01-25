@@ -9,8 +9,15 @@ var validate = require("../schemas/validate");
 var authSchemas = require("../schemas/auth.schema");
 
 function getBackendBaseUrl(req) {
+  // Prefer an explicitly configured public URL.
   var base = process.env.BACKEND_BASE_URL;
   if (base) return String(base).replace(/\/$/, "");
+
+  // Render provides a stable public URL for the service.
+  // Using it avoids issues where req.protocol becomes 'http' behind the proxy.
+  var renderUrl = process.env.RENDER_EXTERNAL_URL;
+  if (renderUrl) return String(renderUrl).replace(/\/$/, "");
+
   return req.protocol + "://" + req.get("host");
 }
 
