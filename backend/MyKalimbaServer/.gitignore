@@ -1,3 +1,5 @@
 
 .env
-bin/
+# NOTE: Express uses bin/www as the production entrypoint. Do not ignore it.
+!bin/
+!bin/www

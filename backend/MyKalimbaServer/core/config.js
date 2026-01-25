@@ -6,6 +6,28 @@ function intFromEnv(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function boolFromEnv(value, fallback) {
+  if (value === undefined || value === null || value === "") return fallback;
+  var s = String(value).trim().toLowerCase();
+  if (s === "true" || s === "1" || s === "yes" || s === "y") return true;
+  if (s === "false" || s === "0" || s === "no" || s === "n") return false;
+  return fallback;
+}
+
+function stringFromEnv(value, fallback) {
+  if (value === undefined || value === null || value === "") return fallback;
+  return String(value);
+}
+
+function decodeBase64Env(value) {
+  if (!value) return "";
+  try {
+    return Buffer.from(String(value), "base64").toString("utf8");
+  } catch (_) {
+    return "";
+  }
+}
+
 module.exports = {
   env: process.env.NODE_ENV || "development",
   mysql: {
@@ -15,6 +37,14 @@ module.exports = {
       process.env.MYSQL_DATABASE || process.env.MYSQL_DB || "kalimba_db",
     user: process.env.MYSQL_USER || process.env.MYSQL_USERNAME || "root",
     password: process.env.MYSQL_PASSWORD || "",
+    ssl: boolFromEnv(process.env.MYSQL_SSL, false),
+    sslRejectUnauthorized: boolFromEnv(
+      process.env.MYSQL_SSL_REJECT_UNAUTHORIZED,
+      true,
+    ),
+    sslCa:
+      decodeBase64Env(process.env.MYSQL_SSL_CA_BASE64) ||
+      stringFromEnv(process.env.MYSQL_SSL_CA, ""),
   },
   auth: {
     jwtSecret:
