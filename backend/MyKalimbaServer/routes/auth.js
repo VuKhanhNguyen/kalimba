@@ -1,10 +1,171 @@
 var express = require("express");
 var router = express.Router();
+var crypto = require("crypto");
 
 var models = require("../models");
 var security = require("../core/security");
+var http = require("../core/http");
 var validate = require("../schemas/validate");
 var authSchemas = require("../schemas/auth.schema");
+
+function getBackendBaseUrl(req) {
+  var base = process.env.BACKEND_BASE_URL;
+  if (base) return String(base).replace(/\/$/, "");
+  return req.protocol + "://" + req.get("host");
+}
+
+function getFrontendBaseUrl() {
+  var base = process.env.FRONTEND_BASE_URL || "http://localhost:5173";
+  return String(base).replace(/\/$/, "");
+}
+
+function getOauthRedirectUri(req, provider) {
+  var base = getBackendBaseUrl(req);
+  var url = new URL(base + "/api/auth/" + provider + "/callback");
+
+  // ngrok free domains may show a browser interstitial ("You are about to visit...")
+  // that breaks OAuth callbacks. Adding this query parameter bypasses it.
+  if (/ngrok/i.test(base)) {
+    url.searchParams.set("ngrok-skip-browser-warning", "true");
+  }
+
+  return url.toString();
+}
+
+function getHostFromUrl(url) {
+  try {
+    return new URL(String(url)).host;
+  } catch (_) {
+    return "";
+  }
+}
+
+function maybeRedirectOauthStartToPublicBase(req, res, provider) {
+  var publicBase = process.env.BACKEND_BASE_URL;
+  if (!publicBase) return false;
+
+  var publicHost = getHostFromUrl(publicBase);
+  var reqHost = req.get("host");
+  if (!publicHost || !reqHost) return false;
+
+  // If user hits http://localhost:3000/api/auth/github but BACKEND_BASE_URL is ngrok,
+  // the state cookie would be set on localhost, while callback lands on ngrok -> invalid_state.
+  // Redirect the *start* step to BACKEND_BASE_URL so cookies + callback share the same domain.
+  if (publicHost !== reqHost) {
+    var startUrl = new URL(
+      String(publicBase).replace(/\/$/, "") + "/api/auth/" + provider,
+    );
+
+    if (/ngrok/i.test(publicBase)) {
+      startUrl.searchParams.set("ngrok-skip-browser-warning", "true");
+    }
+
+    res.redirect(startUrl.toString());
+    return true;
+  }
+
+  return false;
+}
+
+function oauthCookieOptions(req) {
+  // Important: base this on the *actual* request protocol.
+  // If BACKEND_BASE_URL is https (ngrok) but the dev server is accessed via http://localhost,
+  // setting secure=true would prevent the browser from storing the state cookie -> invalid_state.
+  var xfProto = req.headers["x-forwarded-proto"];
+  var isHttps =
+    Boolean(req.secure) || String(xfProto || "").toLowerCase() === "https";
+  return {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: isHttps,
+    path: "/api/auth/",
+    maxAge: 10 * 60 * 1000,
+  };
+}
+
+function sanitizeUsername(raw) {
+  var s = String(raw || "")
+    .trim()
+    .replace(/[^A-Za-z0-9_]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  if (!s) s = "user";
+  if (s.length > 50) s = s.slice(0, 50);
+  return s;
+}
+
+async function generateUniqueUsername(base) {
+  var root = sanitizeUsername(base);
+  var candidate = root;
+  for (var i = 0; i < 20; i++) {
+    // eslint-disable-next-line no-await-in-loop
+    var existing = await models.User.findOne({
+      where: { username: candidate },
+    });
+    if (!existing) return candidate;
+
+    var suffix = String(Math.floor(1000 + Math.random() * 9000));
+    candidate = root;
+    if (candidate.length + 1 + suffix.length > 50) {
+      candidate = candidate.slice(0, 50 - 1 - suffix.length);
+    }
+    candidate = candidate + "_" + suffix;
+  }
+
+  // last resort
+  return "user_" + crypto.randomBytes(4).toString("hex");
+}
+
+function redirectToFrontend(res, path, params) {
+  var base = getFrontendBaseUrl();
+  var qs = new URLSearchParams(params || {}).toString();
+  var url = base + path + (qs ? "?" + qs : "");
+  return res.redirect(url);
+}
+
+async function findOrCreateOauthUser(profile) {
+  // profile: { email, name, avatarUrl, suggestedUsername }
+  if (!profile || !profile.email) {
+    var err = new Error("Missing email from OAuth provider");
+    err.status = 400;
+    throw err;
+  }
+
+  var email = String(profile.email).trim().toLowerCase();
+  var user = await models.User.findOne({ where: { email: email } });
+
+  if (!user) {
+    var username = await generateUniqueUsername(
+      profile.suggestedUsername || email.split("@")[0],
+    );
+    var fullName = String(profile.name || username).trim();
+    if (!fullName) fullName = username;
+    var randomPassword = crypto.randomBytes(24).toString("hex");
+    var passwordHash = await security.hashPassword(randomPassword);
+
+    user = await models.User.create({
+      username: username,
+      passwordHash: passwordHash,
+      email: email,
+      fullName: fullName,
+      phoneNumber: null,
+      avatarUrl: profile.avatarUrl || null,
+      role: "user",
+      status: "active",
+      lastLoginAt: new Date(),
+    });
+  } else {
+    user.lastLoginAt = new Date();
+    if (!user.avatarUrl && profile.avatarUrl)
+      user.avatarUrl = profile.avatarUrl;
+    if ((!user.fullName || user.fullName === user.username) && profile.name) {
+      user.fullName = String(profile.name).trim() || user.fullName;
+    }
+    await user.save();
+  }
+
+  return user;
+}
 
 router.post(
   "/register",
@@ -144,5 +305,285 @@ router.post(
     }
   },
 );
+
+// ----------------------------
+// OAuth: GitHub
+// ----------------------------
+
+router.get("/github", function (req, res) {
+  if (maybeRedirectOauthStartToPublicBase(req, res, "github")) return;
+
+  var clientId = process.env.GITHUB_CLIENT_ID;
+  var clientSecret = process.env.GITHUB_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    return res.status(500).json({ message: "GitHub OAuth is not configured" });
+  }
+
+  var state = crypto.randomBytes(16).toString("hex");
+  res.cookie("oauth_state_github", state, oauthCookieOptions(req));
+
+  var redirectUri = getOauthRedirectUri(req, "github");
+  var authorizeUrl =
+    "https://github.com/login/oauth/authorize" +
+    "?" +
+    new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      scope: "read:user user:email",
+      state: state,
+    }).toString();
+
+  return res.redirect(authorizeUrl);
+});
+
+router.get("/github/callback", async function (req, res, next) {
+  try {
+    if (req.query && req.query.error) {
+      return redirectToFrontend(res, "/login", {
+        oauth_error: String(req.query.error),
+        provider: "github",
+      });
+    }
+
+    var code = req.query && req.query.code ? String(req.query.code) : "";
+    var state = req.query && req.query.state ? String(req.query.state) : "";
+    var expectedState = req.cookies ? req.cookies.oauth_state_github : "";
+    res.clearCookie("oauth_state_github", { path: "/api/auth/" });
+
+    if (!code) {
+      return redirectToFrontend(res, "/login", {
+        oauth_error: "missing_code",
+        provider: "github",
+      });
+    }
+
+    if (!state || !expectedState || state !== expectedState) {
+      return redirectToFrontend(res, "/login", {
+        oauth_error: "invalid_state",
+        provider: "github",
+      });
+    }
+
+    var clientId = process.env.GITHUB_CLIENT_ID;
+    var clientSecret = process.env.GITHUB_CLIENT_SECRET;
+    var redirectUri = getOauthRedirectUri(req, "github");
+
+    var tokenRes = await http.requestJson(
+      "https://github.com/login/oauth/access_token",
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: http.encodeForm({
+          client_id: clientId,
+          client_secret: clientSecret,
+          code: code,
+          redirect_uri: redirectUri,
+        }),
+      },
+    );
+
+    var accessToken =
+      tokenRes && tokenRes.json ? tokenRes.json.access_token : null;
+    if (!accessToken) {
+      return redirectToFrontend(res, "/login", {
+        oauth_error: "token_exchange_failed",
+        provider: "github",
+      });
+    }
+
+    var userRes = await http.requestJson("https://api.github.com/user", {
+      method: "GET",
+      headers: {
+        Authorization: "Bearer " + accessToken,
+        "User-Agent": "MyKalimbaServer",
+        Accept: "application/vnd.github+json",
+      },
+    });
+
+    var ghUser = userRes.json || {};
+
+    var email = ghUser.email;
+    if (!email) {
+      var emailsRes = await http.requestJson(
+        "https://api.github.com/user/emails",
+        {
+          method: "GET",
+          headers: {
+            Authorization: "Bearer " + accessToken,
+            "User-Agent": "MyKalimbaServer",
+            Accept: "application/vnd.github+json",
+          },
+        },
+      );
+
+      var emails = Array.isArray(emailsRes.json) ? emailsRes.json : [];
+      var primary = emails.find(function (e) {
+        return e && e.primary && e.verified && e.email;
+      });
+      if (!primary) {
+        primary = emails.find(function (e) {
+          return e && e.verified && e.email;
+        });
+      }
+      if (!primary) {
+        primary = emails.find(function (e) {
+          return e && e.email;
+        });
+      }
+      email = primary ? primary.email : null;
+    }
+
+    var user = await findOrCreateOauthUser({
+      email: email,
+      name: ghUser.name || ghUser.login,
+      avatarUrl: ghUser.avatar_url,
+      suggestedUsername: ghUser.login,
+    });
+
+    var token = security.signAccessToken({
+      id: user.id,
+      role: user.role,
+      username: user.username,
+    });
+
+    return redirectToFrontend(res, "/oauth/callback", {
+      provider: "github",
+      token: token,
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// ----------------------------
+// OAuth: Google
+// ----------------------------
+
+router.get("/google", function (req, res) {
+  if (maybeRedirectOauthStartToPublicBase(req, res, "google")) return;
+
+  var clientId = process.env.GOOGLE_CLIENT_ID;
+  var clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    return res.status(500).json({ message: "Google OAuth is not configured" });
+  }
+
+  var state = crypto.randomBytes(16).toString("hex");
+  res.cookie("oauth_state_google", state, oauthCookieOptions(req));
+
+  var redirectUri = getOauthRedirectUri(req, "google");
+  var authorizeUrl =
+    "https://accounts.google.com/o/oauth2/v2/auth" +
+    "?" +
+    new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: "openid email profile",
+      state: state,
+      include_granted_scopes: "true",
+    }).toString();
+
+  return res.redirect(authorizeUrl);
+});
+
+router.get("/google/callback", async function (req, res, next) {
+  try {
+    if (req.query && req.query.error) {
+      return redirectToFrontend(res, "/login", {
+        oauth_error: String(req.query.error),
+        provider: "google",
+      });
+    }
+
+    var code = req.query && req.query.code ? String(req.query.code) : "";
+    var state = req.query && req.query.state ? String(req.query.state) : "";
+    var expectedState = req.cookies ? req.cookies.oauth_state_google : "";
+    res.clearCookie("oauth_state_google", { path: "/api/auth/" });
+
+    if (!code) {
+      return redirectToFrontend(res, "/login", {
+        oauth_error: "missing_code",
+        provider: "google",
+      });
+    }
+
+    if (!state || !expectedState || state !== expectedState) {
+      return redirectToFrontend(res, "/login", {
+        oauth_error: "invalid_state",
+        provider: "google",
+      });
+    }
+
+    var clientId = process.env.GOOGLE_CLIENT_ID;
+    var clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    var redirectUri = getOauthRedirectUri(req, "google");
+
+    var tokenRes = await http.requestJson(
+      "https://oauth2.googleapis.com/token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Accept: "application/json",
+        },
+        body: http.encodeForm({
+          code: code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
+          grant_type: "authorization_code",
+        }),
+      },
+    );
+
+    var accessToken =
+      tokenRes && tokenRes.json ? tokenRes.json.access_token : null;
+    if (!accessToken) {
+      return redirectToFrontend(res, "/login", {
+        oauth_error: "token_exchange_failed",
+        provider: "google",
+      });
+    }
+
+    var infoRes = await http.requestJson(
+      "https://openidconnect.googleapis.com/v1/userinfo",
+      {
+        method: "GET",
+        headers: {
+          Authorization: "Bearer " + accessToken,
+          Accept: "application/json",
+        },
+      },
+    );
+
+    var gUser = infoRes.json || {};
+
+    var user = await findOrCreateOauthUser({
+      email: gUser.email,
+      name: gUser.name,
+      avatarUrl: gUser.picture,
+      suggestedUsername: gUser.email
+        ? String(gUser.email).split("@")[0]
+        : "google_user",
+    });
+
+    var token = security.signAccessToken({
+      id: user.id,
+      role: user.role,
+      username: user.username,
+    });
+
+    return redirectToFrontend(res, "/oauth/callback", {
+      provider: "google",
+      token: token,
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
 
 module.exports = router;
