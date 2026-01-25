@@ -143,25 +143,17 @@ export default function HomeSongsPanel() {
     <section style={{ marginBottom: "1rem" }}>
       <article style={{ marginBottom: "1rem" }}>
         <header style={{ marginBottom: "0.75rem" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "end",
-              gap: "0.75rem",
-              flexWrap: "wrap",
-            }}
-          >
-            <div>
-              <h3 style={{ marginBottom: "0.25rem" }}>{t("songs.title")}</h3>
+          <div>
+            <div style={{ textAlign: "center" }}>
+              <h3 style={{ marginBottom: "0.25rem" }}>{t("title")}</h3>
               <small style={{ color: "var(--muted-color)" }}>
-                {t("home.songs.pickHint")}
+                {t("description")}
               </small>
             </div>
 
-            <div style={{ minWidth: "260px", flex: "1 1 280px" }}>
+            <div style={{ marginTop: "0.75rem" }}>
               <label style={{ marginBottom: 0 }}>
-                <small>{t("home.songs.search")}</small>
+                {/* <small>{t("home.songs.search")}</small> */}
                 <input
                   type="search"
                   placeholder={t("home.songs.searchPlaceholder")}

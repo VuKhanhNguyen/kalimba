@@ -6,7 +6,8 @@ export function isLikelyNotationLine(line) {
   // If the line contains characters outside typical tab notation characters,
   // it's likely a lyric line.
   // Allowed: digits (0-7), note letters, octave marks, bar/beat separators, spacing.
-  const nonNotation = trimmed.replace(/[0-7A-Ga-g'.,|\-_:xX#♯\s]/g, "");
+  // Include common Unicode apostrophes/primes seen in copied tabs: ’ (U+2019), ′ (U+2032), ´ (U+00B4).
+  const nonNotation = trimmed.replace(/[0-7A-Ga-g'’′´.,|\-_:xX#♯\s]/g, "");
   return nonNotation.length === 0;
 }
 
