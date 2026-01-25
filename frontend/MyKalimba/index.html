@@ -35,11 +35,12 @@
     <div id="root"></div>
     <script type="module" src="src/assets/js/kalimba.js"></script>
 
-    <script src="src/assets/js/pico-theme-switcher.js"></script>
+    <!-- These are classic scripts that depend on jQuery; ship them via public/ so they exist in production. -->
+    <script src="/js/pico-theme-switcher.js"></script>
 
-    <script src="src/assets/js/pico-color-picker.js"></script>
+    <script src="/js/pico-color-picker.js"></script>
 
-    <script src="src/assets/js/fullscreen.js"></script>
+    <script src="/js/fullscreen.js"></script>
     <script type="module" src="src/main.jsx"></script>
   </body>
 </html>
