@@ -1,0 +1,8 @@
+[build]
+  base = "frontend/MyKalimba"
+  command = "npm ci && npm run build"
+  publish = "dist"
+
+# Optional: keep Netlify CLI/local and builds consistent
+[build.environment]
+  NODE_VERSION = "20"
