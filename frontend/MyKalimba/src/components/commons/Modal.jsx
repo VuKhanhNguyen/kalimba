@@ -39,7 +39,9 @@ export default function Modal({
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.5)",
+        background: "rgba(0,0,0,0.38)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
         zIndex: 9999,
         display: "flex",
         alignItems: "center",
@@ -49,15 +51,13 @@ export default function Modal({
     >
       <div
         onMouseDown={(e) => e.stopPropagation()}
+        className="glass-panel"
         style={{
           width: "100%",
           maxWidth,
           maxHeight: "calc(100vh - 2rem)",
           overflow: "auto",
-          background: "var(--card-background-color)",
-          borderRadius: "var(--border-radius)",
-          border: "1px solid var(--muted-border-color)",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+          borderRadius: "var(--radius-md)",
         }}
       >
         <div

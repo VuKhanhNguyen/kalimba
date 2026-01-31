@@ -2,10 +2,16 @@
 
 /* Global Layout Styles */
 
-body > main.container {
+body > main.container,
+main.container {
   padding-top: 2rem;
   padding-bottom: 2rem;
   min-height: 80vh;
+}
+
+/* Let the liquid background show through (Pico is mostly variable-driven, but this helps in case a page sets a solid background). */
+main.container {
+  background: transparent;
 }
 
 body > header.main-header,

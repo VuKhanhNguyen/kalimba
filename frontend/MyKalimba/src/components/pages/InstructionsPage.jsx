@@ -143,6 +143,7 @@ export function InstructionsPage() {
                           background: "var(--surface)",
                           padding: "0.2rem 0.5rem",
                           borderRadius: "4px",
+                          color: "#000",
                         }}
                       >
                         Space
