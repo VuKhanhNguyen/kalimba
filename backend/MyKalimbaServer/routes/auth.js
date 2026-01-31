@@ -4,9 +4,42 @@ var crypto = require("crypto");
 
 var models = require("../models");
 var security = require("../core/security");
+var config = require("../core/config");
+var mailer = require("../core/mailer");
 var http = require("../core/http");
 var validate = require("../schemas/validate");
 var authSchemas = require("../schemas/auth.schema");
+
+var OTP_TTL_MS = 10 * 60 * 1000;
+var OTP_MAX_ATTEMPTS = 8;
+
+function normalizeEmail(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function generateOtpCode() {
+  // 6 digits, zero-padded
+  var n = crypto.randomBytes(4).readUInt32BE(0) % 1000000;
+  return String(n).padStart(6, "0");
+}
+
+function otpHashFor(otp, userId, expiresAt) {
+  var secret = (config && config.auth && config.auth.jwtSecret) || "";
+  // NOTE: Do not include Date fields in the hash.
+  // MySQL DATETIME + Sequelize timezone handling can cause millisecond differences
+  // between the JS Date used at creation time and the Date read back from DB,
+  // which would make the same OTP fail verification.
+  var raw = String(otp) + ":" + String(userId) + ":" + secret;
+  return crypto.createHash("sha256").update(raw).digest("hex");
+}
+
+function getClientIp(req) {
+  var xf = req.headers && req.headers["x-forwarded-for"];
+  if (xf) return String(xf).split(",")[0].trim();
+  return req.ip || null;
+}
 
 function getBackendBaseUrl(req) {
   // Prefer an explicitly configured public URL.
@@ -307,6 +340,159 @@ router.post(
           last_login_at: user.lastLoginAt,
         },
       });
+    } catch (err) {
+      return next(err);
+    }
+  },
+);
+
+// ----------------------------
+// Forgot password (OTP via email)
+// ----------------------------
+
+router.post(
+  "/forgot-password",
+  validate.validateBody(authSchemas.forgotPasswordSchema),
+  async function (req, res, next) {
+    try {
+      var email = normalizeEmail(req.body.email);
+      var user = await models.User.findOne({ where: { email: email } });
+
+      // Prevent account enumeration: respond OK even if the user does not exist.
+      if (!user) {
+        return res.json({
+          message:
+            "Nếu email tồn tại, mã OTP sẽ được gửi. Vui lòng kiểm tra hộp thư.",
+        });
+      }
+
+      // Basic throttling: if an OTP was created recently, ask user to wait.
+      var latest = await models.PasswordResetOtp.findOne({
+        where: { userId: user.id, consumedAt: null },
+        order: [["created_at", "DESC"]],
+      });
+      if (latest && latest.created_at) {
+        var ageMs = Date.now() - new Date(latest.created_at).getTime();
+        if (ageMs < 30 * 1000) {
+          return res.status(429).json({
+            message: "Vui lòng chờ vài giây rồi thử gửi lại OTP.",
+          });
+        }
+      }
+
+      // Invalidate previous active OTPs for this user.
+      await models.PasswordResetOtp.update(
+        { consumedAt: new Date() },
+        { where: { userId: user.id, consumedAt: null } },
+      );
+
+      var otp = generateOtpCode();
+      var expiresAt = new Date(Date.now() + OTP_TTL_MS);
+      var hash = otpHashFor(otp, user.id);
+
+      await models.PasswordResetOtp.create({
+        userId: user.id,
+        otpHash: hash,
+        expiresAt: expiresAt,
+        consumedAt: null,
+        sentToEmail: email,
+        sendIp: getClientIp(req),
+        attempts: 0,
+      });
+
+      var fromEmail =
+        (config.mail && config.mail.fromEmail) ||
+        (config.mail && config.mail.gmailUser) ||
+        undefined;
+      var fromName = (config.mail && config.mail.fromName) || "MyKalimba";
+
+      var subject = "Mã OTP đặt lại mật khẩu";
+      var text =
+        "Bạn vừa yêu cầu đặt lại mật khẩu.\n\n" +
+        "Mã OTP: " +
+        otp +
+        "\n" +
+        "Mã có hiệu lực trong 10 phút.\n\n" +
+        "Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.";
+
+      await mailer.sendMail({
+        from: fromEmail ? fromName + " <" + fromEmail + ">" : undefined,
+        to: email,
+        subject: subject,
+        text: text,
+        html:
+          "<p>Bạn vừa yêu cầu đặt lại mật khẩu.</p>" +
+          '<p><b>Mã OTP:</b> <span style="font-size:18px">' +
+          otp +
+          "</span></p>" +
+          "<p>Mã có hiệu lực trong <b>10 phút</b>.</p>" +
+          "<p>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>",
+      });
+
+      return res.json({
+        message:
+          "Nếu email tồn tại, mã OTP sẽ được gửi. Vui lòng kiểm tra hộp thư.",
+      });
+    } catch (err) {
+      return next(err);
+    }
+  },
+);
+
+router.post(
+  "/reset-password",
+  validate.validateBody(authSchemas.resetPasswordSchema),
+  async function (req, res, next) {
+    try {
+      var email = normalizeEmail(req.body.email);
+      var otp = String(req.body.otp || "").trim();
+      var newPassword = String(req.body.new_password || "");
+
+      var user = await models.User.findOne({ where: { email: email } });
+      if (!user) {
+        return res
+          .status(400)
+          .json({ message: "OTP không hợp lệ hoặc đã hết hạn" });
+      }
+
+      var now = new Date();
+      var record = await models.PasswordResetOtp.findOne({
+        where: {
+          userId: user.id,
+          consumedAt: null,
+          expiresAt: { [models.Sequelize.Op.gt]: now },
+        },
+        order: [["created_at", "DESC"]],
+      });
+
+      if (!record) {
+        return res
+          .status(400)
+          .json({ message: "OTP không hợp lệ hoặc đã hết hạn" });
+      }
+
+      if ((record.attempts || 0) >= OTP_MAX_ATTEMPTS) {
+        return res.status(429).json({
+          message: "Bạn đã nhập sai OTP quá nhiều lần. Vui lòng gửi lại mã.",
+        });
+      }
+
+      var expected = otpHashFor(otp, user.id);
+      if (expected !== record.otpHash) {
+        record.attempts = (record.attempts || 0) + 1;
+        await record.save();
+        return res
+          .status(400)
+          .json({ message: "OTP không hợp lệ hoặc đã hết hạn" });
+      }
+
+      user.passwordHash = await security.hashPassword(newPassword);
+      await user.save();
+
+      record.consumedAt = now;
+      await record.save();
+
+      return res.json({ message: "Đổi mật khẩu thành công" });
     } catch (err) {
       return next(err);
     }

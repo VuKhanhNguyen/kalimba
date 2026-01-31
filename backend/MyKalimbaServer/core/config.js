@@ -86,4 +86,26 @@ module.exports = {
     logging: String(process.env.DB_LOGGING || "").toLowerCase() === "true",
     timezone: process.env.DB_TIMEZONE || "+07:00",
   },
+  mail: {
+    // Gmail SMTP (use an App Password if 2FA is enabled)
+    // Prefer GMAIL_* vars, but accept legacy MAIL_* vars already used in this repo.
+    gmailUser:
+      process.env.GMAIL_USER ||
+      process.env.MAIL_USERNAME ||
+      process.env.MAIL_USER ||
+      "",
+    gmailAppPassword:
+      process.env.GMAIL_APP_PASSWORD ||
+      process.env.GMAIL_PASS ||
+      process.env.MAIL_PASSWORD ||
+      process.env.MAIL_PASS ||
+      "",
+    fromName: process.env.MAIL_FROM_NAME || "MyKalimba",
+    fromEmail:
+      process.env.MAIL_FROM_EMAIL ||
+      process.env.MAIL_FROM ||
+      process.env.GMAIL_USER ||
+      process.env.MAIL_USERNAME ||
+      "",
+  },
 };

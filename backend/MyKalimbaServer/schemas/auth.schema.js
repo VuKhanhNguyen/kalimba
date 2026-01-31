@@ -26,7 +26,22 @@ var loginSchema = Joi.object({
   password: Joi.string().min(1).max(200).required(),
 });
 
+var forgotPasswordSchema = Joi.object({
+  email: Joi.string().email().max(254).required(),
+});
+
+var resetPasswordSchema = Joi.object({
+  email: Joi.string().email().max(254).required(),
+  otp: Joi.string()
+    .trim()
+    .pattern(/^[0-9]{6}$/)
+    .required(),
+  new_password: Joi.string().min(8).max(200).required(),
+});
+
 module.exports = {
   registerSchema: registerSchema,
   loginSchema: loginSchema,
+  forgotPasswordSchema: forgotPasswordSchema,
+  resetPasswordSchema: resetPasswordSchema,
 };

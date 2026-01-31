@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../../assets/css/auth.css";
 
 const API_BASE_URL =
@@ -236,9 +236,9 @@ const Login = () => {
               <input type="checkbox" name="remember" />
               <span>Remember me</span>
             </label>
-            <a href="/forgot-password" className="forgot-link">
+            <Link to="/forgot-password" className="forgot-link">
               Forgot Password?
-            </a>
+            </Link>
           </div>
 
           <button type="submit" className="auth-button" disabled={isSubmitting}>

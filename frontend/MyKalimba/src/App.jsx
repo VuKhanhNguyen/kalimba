@@ -12,6 +12,7 @@ import ProfilePage from "./components/pages/ProfilePage.jsx";
 import SettingsPage from "./components/pages/SettingsPage.jsx";
 import SongsPage from "./components/pages/SongsPage.jsx";
 import OAuthCallbackPage from "./components/pages/OAuthCallbackPage.jsx";
+import ForgotPasswordPage from "./components/pages/ForgotPasswordPage.jsx";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             <Route path="/songs" element={<SongsPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
           </Routes>
         </Suspense>

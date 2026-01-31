@@ -3,6 +3,10 @@ var db = require("../core/db");
 var User = require("./User")(db.sequelize, db.Sequelize.DataTypes);
 var Song = require("./Song")(db.sequelize, db.Sequelize.DataTypes);
 var Tab = require("./Tab")(db.sequelize, db.Sequelize.DataTypes);
+var PasswordResetOtp = require("./PasswordResetOtp")(
+  db.sequelize,
+  db.Sequelize.DataTypes,
+);
 
 User.hasMany(Song, { foreignKey: "createdBy", as: "songs" });
 Song.belongsTo(User, { foreignKey: "createdBy", as: "creator" });
@@ -13,10 +17,14 @@ Tab.belongsTo(Song, { foreignKey: "songId", as: "song" });
 User.hasMany(Tab, { foreignKey: "createdBy", as: "tabs" });
 Tab.belongsTo(User, { foreignKey: "createdBy", as: "creator" });
 
+User.hasMany(PasswordResetOtp, { foreignKey: "userId", as: "passwordOtps" });
+PasswordResetOtp.belongsTo(User, { foreignKey: "userId", as: "user" });
+
 module.exports = {
   sequelize: db.sequelize,
   Sequelize: db.Sequelize,
   User: User,
   Song: Song,
   Tab: Tab,
+  PasswordResetOtp: PasswordResetOtp,
 };
