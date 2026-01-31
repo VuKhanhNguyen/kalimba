@@ -1,4 +1,30 @@
-require("dotenv").config();
+var path = require("path");
+var dotenv = require("dotenv");
+
+// Flexible env loading:
+// - In production (e.g. Render), you typically set env vars in the dashboard and no .env file is needed.
+// - Locally, you can keep separate files: .env.development and .env.production.
+// - You can also override with DOTENV_CONFIG_PATH.
+(function loadEnv() {
+  var explicitPath = process.env.DOTENV_CONFIG_PATH;
+  var nodeEnv = String(process.env.NODE_ENV || "development").toLowerCase();
+
+  // Prefer env-specific file locally.
+  var preferredFile =
+    nodeEnv === "production" ? ".env.production" : ".env.development";
+  var preferredPath = path.resolve(process.cwd(), preferredFile);
+
+  if (explicitPath) {
+    dotenv.config({ path: path.resolve(process.cwd(), String(explicitPath)) });
+    return;
+  }
+
+  // Try env-specific file first; if missing, fall back to plain .env.
+  var r = dotenv.config({ path: preferredPath });
+  if (r && r.error) {
+    dotenv.config();
+  }
+})();
 
 function intFromEnv(value, fallback) {
   if (value === undefined || value === null || value === "") return fallback;
