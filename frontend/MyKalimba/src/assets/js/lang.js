@@ -1,12 +1,8 @@
-// DEPRECATED: This file is no longer used.
-// Localization is now handled by the React/Vite bundle (see src/i18n/I18nProvider.jsx).
-// Keep this file only for reference.
 var langs = [
   { code: "en", text: "English (English)" },
   { code: "vi", text: "Vietnamese (Tiếng Việt)" },
 ];
 
-// sắp xếp các ngôn ngữ theo thứ tự bảng chữ cái
 langs.sort(function (a, b) {
   var textA = a.text.toUpperCase();
   var textB = b.text.toUpperCase();
@@ -21,13 +17,11 @@ function findSupportedLang(code) {
   var normalized = normalizeLangCode(code);
   if (!normalized) return null;
 
-  // Exact match first (case-insensitive)
   var exact = langs.find(function (lang) {
     return normalizeLangCode(lang.code) === normalized;
   });
   if (exact) return exact.code;
 
-  // Fall back to base language (e.g. vi-VN -> vi)
   var base = normalized.split("-")[0];
   if (!base) return null;
   var baseMatch = langs.find(function (lang) {
@@ -45,25 +39,19 @@ var currentLang = storedLang
   ? findSupportedLang(storedLang) || getUserLang()
   : getUserLang();
 
-// Trả về mã ngôn ngữ của người dùng
 function getUserLang() {
-  // Lấy các ngôn ngữ ưu tiên của người dùng từ navigator.languages
   var userLangs =
     navigator.languages && navigator.languages.length
       ? navigator.languages
       : [navigator.language || navigator.userLanguage || "en"];
 
-  // Duyệt qua các ngôn ngữ theo thứ tự ưu tiên
   for (var i = 0; i < userLangs.length; i++) {
     var supported = findSupportedLang(userLangs[i]);
     if (supported) return supported;
   }
-
-  // Nếu không tìm thấy ngôn ngữ nào, trả về mã ngôn ngữ tiếng Anh
   return "en";
 }
 
-// Tải ngôn ngữ mặc định (trong trường hợp ngôn ngữ được chọn không có bản địa hóa cho một số khóa)
 var defaultLocalization;
 
 function applyLocalization(localization) {
@@ -85,7 +73,6 @@ function applyLocalization(localization) {
   }
 }
 
-// Dịch toàn bộ trang sang ngôn ngữ được chỉ định
 function loadLanguage(lang) {
   currentLang = findSupportedLang(lang) || "en";
   $.getJSON("/lang/" + currentLang + ".json")
@@ -93,12 +80,10 @@ function loadLanguage(lang) {
       applyLocalization(data);
     })
     .fail(function () {
-      // If a translation file is missing, fall back to the default localization.
       applyLocalization(defaultLocalization);
     });
 }
 
-// Điền phần tử chọn ngôn ngữ trên trang với các ngôn ngữ có sẵn
 function fillLangSelector() {
   const LangSelector = $("#localization");
   LangSelector.empty();
@@ -114,7 +99,6 @@ function fillLangSelector() {
 }
 
 $(document).ready(function () {
-  // Load default localization first, then init.
   $.getJSON("/lang/en.json")
     .done(function (data) {
       defaultLocalization = data;

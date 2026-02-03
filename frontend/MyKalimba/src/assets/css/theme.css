@@ -86,7 +86,6 @@ body {
 }
 
 html {
-  /* Pico sets background on :root (html). Ensure it matches our theme. */
   background-color: var(--background);
 }
 

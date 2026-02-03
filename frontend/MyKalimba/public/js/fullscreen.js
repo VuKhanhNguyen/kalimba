@@ -1,10 +1,6 @@
 $(document).ready(function () {
-  // Кнопка переключения Фуллскрина
   const fullscreenButton = $("#fullscreenButton");
-  // Блок, который необходимо делать в фулл скрин
   const mainContainer = $("#main-container")[0];
-
-  // Событие на нажатие на кнопку Фуллскрина
   fullscreenButton.on("click", function () {
     if (document.fullscreenElement) {
       exitFullscreen();
@@ -13,9 +9,7 @@ $(document).ready(function () {
     }
   });
 
-  // Событие вызывается при смене состояния фуллскрина
   $(document).on("fullscreenchange", function () {
-    // Если полный экран выключен, выходим из него
     if (!document.fullscreenElement) {
       $("#fullscreen-on").show();
       $("#fullscreen-off").hide();
@@ -23,7 +17,6 @@ $(document).ready(function () {
     }
   });
 
-  // Функция входа в полный экран
   function enterFullscreen() {
     if (mainContainer.requestFullscreen) {
       mainContainer.requestFullscreen();
@@ -39,7 +32,6 @@ $(document).ready(function () {
     $("#main-container").addClass("fullscreen");
   }
 
-  // Функция выхода из полного экрана
   function exitFullscreen() {
     if (document.exitFullscreen) {
       document.exitFullscreen();

@@ -54,17 +54,32 @@ export function Header() {
     setUsername(null);
     navigate("/");
   };
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
   return (
     <header className="main-header">
       <nav className="main-navigation">
-        <ul>
+        <ul className="nav-brand">
           <li>
             <a href="/" className="contrast">
               <strong>{t("title")}</strong>
             </a>
           </li>
+          <li className="mobile-menu-toggle">
+            <button
+              onClick={toggleMenu}
+              className="outline contrast"
+              aria-label="Toggle menu"
+            >
+              ☰
+            </button>
+          </li>
         </ul>
-        <ul className="nav-links">
+        <ul className={`nav-links ${isMenuOpen ? "open" : ""}`}>
           <li>
             <a href="/">{t("header.nav.home")}</a>
           </li>
