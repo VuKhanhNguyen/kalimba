@@ -439,10 +439,29 @@ input[type="range"]::-webkit-slider-thumb {
   flex-direction: column;
   justify-content: flex-start;
   --color: var(--primary-inverse);
-  height: -webkit-fill-available;
+  height: 100vh;
+  max-height: 100vh;
   margin: 0;
-  margin-bottom: var(--spacing);
   padding: 3vh;
+  overflow: hidden;
+}
+
+/* Fullscreen layout: let the keyboard area take most space */
+.fullscreen .kalimba-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 300px;
+  align-items: stretch;
+}
+
+.fullscreen .key-zone {
+  align-self: stretch;
+}
+
+.fullscreen .buttons-container {
+  height: auto;
+  flex: 0 0 auto;
+  margin-top: 10px;
 }
 
 .buttons-container {

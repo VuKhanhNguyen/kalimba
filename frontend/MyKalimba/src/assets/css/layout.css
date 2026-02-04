@@ -95,8 +95,8 @@ body > footer.main-footer {
 
 /* Footer Styles */
 .main-footer {
-  margin-top: 4rem;
-  padding: 3rem 0 1.5rem;
+  margin-top: 2.5rem;
+  padding: 1.5rem 0 1.5rem;
   background-color: var(--surface-transparent);
   backdrop-filter: blur(10px);
   border-top: var(--glass-border);
@@ -107,21 +107,29 @@ body > footer.main-footer {
 
 .footer-content {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 3rem;
-  margin-bottom: 3rem;
-  text-align: left;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
-  padding: 0 1rem;
+  padding: 0 0.5rem;
+}
+
+.footer-section:first-child {
+  grid-column: 1 / -1;
+  margin-bottom: 1rem;
+}
+
+.footer-section {
+  text-align: center;
 }
 
 .footer-section h5 {
   color: var(--secondary);
-  margin-bottom: 1.2rem;
-  font-weight: 700;
-  font-size: 1.2rem;
+  margin-bottom: 0.8rem;
+  font-weight: 800;
+  font-size: 0.95rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -134,8 +142,17 @@ body > footer.main-footer {
 
 .footer-section ul {
   list-style: none;
+  list-style-type: none;
+  padding-left: 0;
+  margin-left: 0;
   padding: 0;
   margin: 0;
+}
+
+.footer-section li {
+  list-style: none;
+  list-style-type: none;
+  padding-left: 0;
 }
 
 .footer-section a {
@@ -143,11 +160,12 @@ body > footer.main-footer {
   text-decoration: none;
   transition: all 0.2s ease;
   display: inline-block;
+  font-size: 0.85rem;
 }
 
 .footer-section a:hover {
   color: var(--primary);
-  transform: translateX(5px);
+  transform: translateY(-1px);
   text-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
 }
 
@@ -419,46 +437,7 @@ button:active,
     font-size: 1.4rem;
   }
 
-  .footer-content {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    padding: 0 0.5rem;
-  }
-
-  .footer-section:first-child {
-    grid-column: 1 / -1;
-    margin-bottom: 1rem;
-  }
-
-  .footer-section {
-    text-align: center;
-  }
-
-  .footer-section ul {
-    list-style: none; /* Ensure bullets are gone */
-    padding-left: 0;
-  }
-
-  .footer-section li {
-    list-style-type: none; /* Double check for Pico override */
-    padding-left: 0;
-    margin-bottom: 0.5rem;
-  }
-
-  .footer-section h5 {
-    font-size: 0.9rem;
-    margin-bottom: 0.8rem;
-    font-weight: 800;
-  }
-
-  .footer-section a {
-    font-size: 0.85rem;
-  }
-
-  .main-footer {
-    margin-top: 2rem;
-    padding-top: 1rem;
-  }
+  /* Footer uses the same layout on desktop & mobile */
 }
 
 @keyframes slideDown {
